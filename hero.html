@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Promethee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400&family=Newsreader:ital,opsz,wght@1,6..72,400&display=swap">
+<script>if(/[?&]h1=line(&|$)/.test(location.search))document.documentElement.classList.add('h1line');
+document.documentElement.classList.add('solo');
+(function(){ var v=(new URLSearchParams(location.search).get('intro')||'a').toLowerCase(), R=document.documentElement; if(v==='off'||!/^[abc]$/.test(v)||matchMedia('(prefers-reduced-motion: reduce)').matches) return; R.classList.add('intro'); R.dataset.intro=v; })();</script>
+<link rel="preload" as="image" href="hero/f10_arches_5k.avif" type="image/avif" media="(min-width: 1441px)">
+<link rel="preload" as="image" href="hero/f10_arches_2k.avif" type="image/avif" media="(max-width: 1440px)">
+<style>
+/* ---------- tokens (the only colour values of the page) ---------- */
+:root{
+  --bg:#060707; --ivory:#EDEAE4; --gray:#B4B4B0; --gray2:#9A9A96; --line:#2A2A29; --surf:#111212; --surf2:#1C1D1D;
+  --meet:#00897B;                              /* the app's own tint for the Google Meet mark (v2-session-end, config/appChips.ts) */
+
+  /* the hero image, the f10 (8 Nov): one photograph, 5120 x 2858, shown whole. The lit ring of the centre arch sits at --at on the screen.
+     From there the image, the H1, the line under it and the link fit in the first screen with the start of the feed: that fixes its scale. */
+  --vh:100vh;
+  --text:calc(var(--gap) + var(--h1) * 2.08 + 8px + var(--hp) * 1.4 + 32px + var(--hl) * 3 + 20px + var(--hc) * 1.4);                                /* from the frieze to the bottom of the link: 48 + H1 (2 lines) + 8 + line + 32 + link */
+  --at:76px;                                   /* the lit ring of the centre arch on the screen */
+  /* in image fractions: the lit ring of the centre arch at --yc, the end of the light on the floor at --yb. The edges of the image already fall
+     to the black of the page in the photograph itself (the light dies out on the walls and the floor), so no mask and no blurred edge. */
+  --ir:1.79146; --yc:.146; --yb:.935;
+  --iw:round(down, clamp(720px, (var(--vh) * .92 - var(--text) - var(--at)) / (var(--yb) - var(--yc)) * var(--ir), 2400px), 2px);   /* grows with the screen */
+  --ih:calc(var(--iw) / var(--ir));
+  --it:calc(var(--at) - var(--ih) * var(--yc));   /* top of the image on the screen */
+  --fy:calc(var(--it) + var(--ih) * var(--yb));   /* end of the light on the floor: the capitals of the H1 start one --gap under it */
+
+  /* the grid of promethee.io, measured on Riad's capture (3200 x 1690 CSS, dpr 2): one centred container, feed 600, gutter 40,
+     leaderboard 368, 1008 in all. Never scaled: a larger screen only gets more black around it. */
+  --feed:600px; --gut:40px; --board:368px; --wrap:1008px;
+  /* the hero chrome sits on the edges of that container: logo and counter on the left edge of the feed ("Activity"), the last nav link
+     on the right edge of the leaderboard. Decided in capture (shots/nav_*.png): one axis for the whole page, the black grows around it. */
+  --pad:24px;                                  /* the least margin, when the screen is barely wider than the container */
+  --edge:max(var(--pad), calc((100% - var(--wrap)) / 2));   /* in .nav and .row, 100 % is the width of the hero */
+
+  /* type: the sizes of 1440 x 900 at every width. Nothing grows with the screen. */
+  --h1:clamp(52px, 3.6vw, 96px); --hp:clamp(18px, 1.25vw, 30px); --hl:clamp(16px, 1.11vw, 26px); --hc:clamp(14px, .97vw, 22px); --gap:clamp(48px, 3.33vw, 80px);   /* v6: the head scales with the screen, 1440 x 900 unchanged */
+  --capt:.161;                                 /* top of the capitals under the top of the H1 box, in em (DM Sans 500, line-height 1.04, measured) */
+}
+@media (max-width: 699px){
+  :root{
+    /* phone: the image is the width of the screen, whole */
+    --vh:100svh;
+    --iw:100vw;
+    --pad:16px; --edge:16px; --gap:33px; --h1:32px;   /* 33: DM Sans at 32 px starts its capitals 0.6 px higher than the cap ratio of 52 px, 33 keeps 32 measured */
+    --hp:16px; --hl:15px; --hc:13px;
+  }
+}
+
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ivory);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+a{color:var(--ivory)}
+p,h1,h2,ol,figure{margin:0}
+
+/* ---------- hero ---------- */
+/* the hero is only as tall as the head: the band, the text under the ledge, the link. The feed follows. */
+.hero{position:relative;padding-top:calc(var(--fy) + var(--gap) - var(--capt) * var(--h1));background:var(--bg)}
+/* the band: the live planet (hero/globe.js, a 1440 x 900 scene as wide as the image, top on top) seen through the f10, whose three openings are cut out (alpha) */
+.band{position:absolute;left:50%;top:var(--it);width:var(--iw);height:var(--ih);margin-left:calc(var(--iw) / -2);overflow:hidden}
+.scene{position:absolute;left:0;top:0;width:100%;aspect-ratio:1440 / 900;clip-path:inset(0 0 15.5% 0)}   /* the planet is only seen through the openings: nothing is drawn under the floor line (scene y 760) */
+.scene canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.band picture img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none}
+
+.nav{position:absolute;left:0;right:0;top:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 var(--edge);font-size:14px;line-height:20px;z-index:2}
+.brand{display:flex;align-items:center;text-decoration:none}
+/* the logo (symbol + Promethee, from RESSOURCES_LOGO_PROMETHEE), as a mask so it takes the ivory of the page */
+.wm{display:block;height:15px;aspect-ratio:1248 / 185;background:var(--ivory);-webkit-mask:url(img/logo-promethee.png) center / contain no-repeat;mask:url(img/logo-promethee.png) center / contain no-repeat}
+.links{display:flex;gap:32px}
+.links a{text-decoration:none;color:var(--gray)}
+.links a.on{color:var(--ivory)}
+
+/* the capitals of the H1 start one gap (24 px, on the 8 grid) under the bottom of the carved frieze under the stone ledge */
+.copy{position:relative;padding:0 16px;pointer-events:none;text-align:center}
+.copy h1{font-size:var(--h1);line-height:1.04;font-weight:500;letter-spacing:-.025em}
+.copy h1 span{display:block}
+/* PROPOSAL, waiting for Riad (?h1=line): the H1 on one line on desktop (about 850 px wide at 52 px), two lines on phone.
+   The 54 px of the second line go back to the band through --text, the head still ends at 64.5 %. Off by default. */
+@media (min-width: 1100px){ html.h1line{--text:156px} html.h1line .copy h1 span{display:inline} }
+.copy p{margin-top:8px;font-size:var(--hp);line-height:1.4;color:var(--gray);text-wrap:balance}
+/* last row: the counter on the left edge of the container (left edge = logo = "Activity"), the link on the page axis, one shared baseline */
+.row{position:relative;margin-top:32px;display:flex;flex-direction:column;align-items:center;row-gap:20px;padding:0 var(--edge)}   /* v6: one axis, the link then the counter, both centred */
+.row .cta{order:1}
+.row .live{order:2}
+.cta{display:flex;flex-direction:column;align-items:center;max-width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:calc(var(--hl) * 3);padding:0 calc(var(--hl) * 2);border-radius:999px;background:var(--ivory);color:#060707;font-size:var(--hl);font-weight:500;text-decoration:none;white-space:nowrap;transition:background .2s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+@media (hover:hover){ .btn:hover{background:#fff;transform:translateY(-1px)} }
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:1px solid var(--ivory);outline-offset:3px}
+/* phone: a desktop app cannot be installed there, so the button becomes "send me the link" */
+.send{display:none;width:100%}
+.send .f{display:flex;align-items:center;height:48px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(237,234,228,.28)}
+.send input{flex:1;min-width:0;height:100%;padding:0 8px 0 20px;background:none;border:0;outline:0;color:var(--ivory);font:inherit;font-size:16px;border-radius:999px}
+.send input::placeholder{color:var(--gray2)}
+.send button{flex:none;height:40px;margin-right:4px;padding:0 16px;border:0;border-radius:999px;background:var(--ivory);color:#060707;font:inherit;font-size:15px;font-weight:500}
+.send .note{margin-top:12px;font-size:13px;line-height:1.4;color:var(--gray2);text-align:center}
+.send.sent .f{display:none}
+.send.sent .note{margin-top:0;font-size:15px;color:var(--ivory)}
+.live{display:flex;align-items:baseline;gap:.5714em;font-size:var(--hc);color:var(--gray);white-space:nowrap}
+.live b{color:var(--ivory);font-weight:500;font-variant-numeric:tabular-nums}
+/* DM Sans from Google Fonts has no tabular figures: a fixed box keeps the label still when the number changes */
+.live b.n{flex:none;width:2.0143em;text-align:left;margin-right:-.2857em}
+.dot{align-self:center;flex:none;width:.4286em;height:.4286em;border-radius:50%;background:var(--ivory);display:block}
+@media (max-width: 699px){
+  .hero{padding-bottom:0}
+  .nav{height:56px}.links{gap:20px}
+  .row{grid-template-columns:minmax(0,1fr);margin-top:32px;row-gap:20px}
+  .row .cta{width:100%}
+  .cta .btn,.youcta .dl2{display:none}
+  .send{display:block}
+  .row .live{grid-column:1;grid-row:2}
+}
+
+/* ---------- the feed: the app's post, as it is in the app (refs/app, Riad's captures of 9 Nov). The app's orange stays on what is orange in the app. ---------- */
+:root{--app-accent:#DB7350; --app-ring:#C9A464; --app-muted:#8F8F8B}
+@font-face{font-family:'Promethee Condensed';src:url(fonts/PrometheeCondensed.ttf) format('truetype');font-display:swap}
+.sec{display:flex;flex-direction:column;align-items:center;padding:176px 24px 0}
+.sh{text-align:center;margin-bottom:64px}
+.kick{font-size:13px;line-height:1.4;color:var(--gray2)}
+.h2{margin-top:12px;font-size:clamp(28px,2.25vw,40px);line-height:1.15;font-weight:500;letter-spacing:-.022em;text-wrap:balance}
+.feedcol{width:100%;max-width:640px}
+.post{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:12px;padding-bottom:48px}
+.pav{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--app-ring);display:flex;align-items:center;justify-content:center;background:var(--surf2);font-size:16px;font-weight:500;color:var(--gray)}
+.pav.empty{box-shadow:inset 0 0 0 1.5px var(--line);background:none}
+.pbody{min-width:0}
+.phead{display:flex;align-items:center;gap:6px;height:22px;margin-top:2px;font-size:15px;line-height:22px;white-space:nowrap}
+.pname{font-weight:500;color:var(--ivory)}
+.sep{color:var(--app-muted);font-size:12px}
+.ptime{color:var(--app-muted)}
+.pbadge{display:inline-flex;align-items:center;gap:5px;color:var(--app-accent)}
+.ib{width:15px;height:15px}
+.ptools{margin-left:auto;display:flex;align-items:center;gap:14px;color:var(--gray)}
+.it{width:18px;height:18px}
+.ptxt{margin-top:6px;font-size:15px;line-height:1.5;color:var(--ivory)}
+.poster .big,.poster .lab,.poster .hdl{text-shadow:0 0 24px rgba(0,0,0,.28),0 1px 2px rgba(0,0,0,.18)}
+/* the session poster: the app's painting, the bookmark, the handle, the duration in Promethee Condensed, the dock of apps */
+.poster{position:relative;margin-top:16px;aspect-ratio:1.52;border-radius:12px;overflow:hidden;background:var(--surf);box-shadow:0 0 0 1px rgba(237,234,228,.06)}
+.poster img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.poster .bm{position:absolute;left:5.5%;top:0;width:36px;height:64px;background:rgba(90,90,88,.72);clip-path:polygon(0 0,100% 0,100% 100%,50% 86%,0 100%);display:flex;justify-content:center;padding-top:16px;color:#fff}
+.poster .bm svg{width:22px;height:22px;fill:currentColor}
+.poster .hdl{position:absolute;right:20px;top:18px;font-size:12px;color:rgba(255,255,255,.82)}
+.poster .big{position:absolute;left:0;right:0;top:50%;transform:translateY(-62%);text-align:center;font-family:'Promethee Condensed','DM Sans',sans-serif;font-size:clamp(64px,8.2vw,112px);line-height:.9;color:#F4F1EA;letter-spacing:-.01em}
+.poster .lab{position:absolute;left:0;right:0;top:63%;text-align:center;font-size:12px;letter-spacing:.32em;color:rgba(255,255,255,.88)}
+.poster .dock{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:flex;gap:8px;padding:7px;border-radius:12px;background:rgba(40,40,40,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.poster .dock img,.poster .dock .meetk{width:30px;height:30px;border-radius:7px;display:block}
+.poster .dock .meetk{background:#fff;-webkit-mask:none;position:relative}
+.poster .dock .meetk::after{content:'';position:absolute;inset:5px;background:var(--meet);-webkit-mask:url(img/apps/googlemeet.svg) center / contain no-repeat;mask:url(img/apps/googlemeet.svg) center / contain no-repeat}
+.pmeta{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:15px;color:var(--app-muted)}
+.pmeta .m{display:inline-flex;align-items:center;gap:6px}
+.ic{width:15px;height:15px}
+.dotb{width:4px;height:4px;border-radius:50%;background:#55554F}
+.apps{display:inline-flex;gap:4px}
+.app{width:16px;height:16px;border-radius:4px;display:block;object-fit:contain}
+.app.inv{filter:invert(.93)}
+.app.mask{border-radius:0;background:var(--meet);-webkit-mask:url(img/apps/googlemeet.svg) center / 84% no-repeat;mask:url(img/apps/googlemeet.svg) center / 84% no-repeat}
+.pacts{display:flex;align-items:center;gap:24px;margin-top:16px;font-size:15px;color:var(--gray)}
+.pacts .a{display:inline-flex;align-items:center;gap:8px}
+.ia{width:20px;height:20px}
+.pacts .liked{color:var(--app-accent)}
+.cg{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--app-muted)}
+.cg b{color:var(--ivory);font-weight:500}
+.stk{display:flex}
+.stk i{width:24px;height:24px;border-radius:50%;background:#2A2A28;box-shadow:0 0 0 2px var(--bg);font-style:normal;font-size:11px;color:var(--gray);display:flex;align-items:center;justify-content:center;margin-right:-7px}
+.stk i:last-child{margin-right:0}
+/* ---------- the end: your post. The same post as the others, on the same grid (avatar on the left edge of the feed, body column, poster as wide).
+   Its poster is the app's own end-of-session card (refs/app, the post of BRYANN2K): the painting dimmed under a flat veil, a line in Newsreader italic,
+   the figure in Promethee Condensed, its label in DM Mono, the hours under it, four corner marks. Only real data: the time on this page and when it started. ---------- */
+.rec{container-type:inline-size}
+.rec::after{content:'';position:absolute;inset:0;background:rgba(6,7,7,.52)}            /* one flat veil: the text never sits on bright detail */
+.rec .bm,.rec .hdl,.rec .card{z-index:1}
+.rec .hdl{top:16px;right:24px;line-height:20px;text-shadow:none;color:var(--gray)}
+.rec .card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;padding:3.2cqw 6.4cqw}
+.rec .card i{position:absolute;width:2.4cqw;height:2.4cqw;border:0 solid rgba(237,234,228,.7)}
+.rec .card i:nth-child(1){left:0;top:0;border-width:1px 0 0 1px}
+.rec .card i:nth-child(2){right:0;top:0;border-width:1px 1px 0 0}
+.rec .card i:nth-child(3){left:0;bottom:0;border-width:0 0 1px 1px}
+.rec .card i:nth-child(4){right:0;bottom:0;border-width:0 1px 1px 0}
+.rec .ser{font-family:'Newsreader',serif;font-style:italic;font-size:max(15px,4cqw);line-height:1.2;color:var(--ivory)}
+.rec .fig{margin-top:2.4cqw;font-family:'Promethee Condensed','DM Sans',sans-serif;font-size:max(48px,14cqw);line-height:.86;color:var(--ivory);font-variant-numeric:tabular-nums}
+.rec .mono{font-family:'DM Mono',monospace;font-size:12px;line-height:16px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+.rec .lab2{margin-top:1.6cqw;color:var(--ivory)}
+.rec .span{margin-top:3.2cqw;color:var(--gray)}
+@container (max-width: 480px){ .rec .span{display:none} .rec .card{padding:16px 24px} .rec .fig{margin-top:8px} .rec .lab2{margin-top:8px} }   /* phone: the hours go, the figure keeps its air */
+/* ---------- the end of the page: your post. It stays a post of the feed (avatar on the left edge, body column), but it is the last one and the
+   only live one: more black before it, the painting lit (lighter veil, a fine ivory edge), the figure larger, and under the poster, in the place of
+   the reactions, the way out as wide as the poster, the live count under it. ---------- */
+/* the gate (Nassim's sketch, 11 Nov): one panel that closes the feed, after the last post (no blurred post behind it: Riad read it as a broken feed). It says why the feed stops, shows your session running,
+   gives the way out, then what else the app is: four tiles, each with a small piece of the real app (the session pill, today, the ranking, a guild). */
+.gate{position:relative;z-index:1;margin:48px -24px 0;padding:24px;border-radius:28px;background:var(--bg);box-shadow:0 0 0 1px var(--line)}
+.lock{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:24px;font-size:14px;line-height:20px;color:var(--gray2)}
+.lock svg{width:16px;height:16px;flex:none}
+.gate .post{padding-bottom:0}
+.gate>.poster{margin-top:20px}
+.dl2 svg{width:18px;height:18px;margin-right:10px;flex:none}
+.sub{display:flex;justify-content:center;align-items:baseline;gap:24px;font-size:14px;line-height:20px}
+.alt{color:var(--gray);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+@media (hover:hover){ .alt:hover{color:var(--ivory)} }
+.more{margin-top:32px;padding-top:32px;border-top:1px solid var(--line);text-align:center;font-family:'DM Mono',monospace;font-size:12px;line-height:16px;letter-spacing:.16em;text-transform:uppercase;color:var(--gray2)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;--e:cubic-bezier(.23,1,.32,1)}
+/* a tile is a small stage: one of the app's paintings under a flat veil, and on it a real piece of the app, alive. The words sit under the stage.
+   v4 (11 Nov): each stage shows what the feature gives, not a token of it: the apps a session tracks, a season of work, your row climbing, a guild's week. */
+.tile{background:var(--surf);border-radius:20px;padding:8px;box-shadow:inset 0 0 0 1px rgba(237,234,228,.06)}
+.tv{position:relative;height:208px;border-radius:12px;overflow:hidden;background:var(--bg)}
+.tv .tb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;scale:1.1;transition:scale 1.6s var(--e);animation:drift 26s ease-in-out infinite alternate}
+@keyframes drift{from{translate:-2% 1%}to{translate:2% -1%}}
+.tv::after{content:'';position:absolute;inset:0;background:rgba(6,7,7,var(--v,.58));transition:background .5s ease}
+.tv>.st{position:absolute;inset:16px;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.tx{padding:16px 12px 12px}
+.tile b.tt{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--ivory)}
+.tile span.td{display:block;margin-top:4px;font-size:14px;line-height:1.45;color:var(--gray2);text-wrap:pretty}
+@media (hover:hover) and (pointer:fine){ .tile:hover .tb{scale:1.03} .tile:hover .tv::after{background:rgba(6,7,7,calc(var(--v,.58) - .1))} }
+.k{font-family:'DM Mono',monospace;font-size:11px;line-height:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray)}
+.av{position:relative;display:flex;align-items:center;justify-content:center;flex:none;border-radius:50%;background:var(--surf2);font-style:normal;font-weight:500;color:var(--gray)}
+.roll{white-space:pre;font-variant-numeric:tabular-nums}
+.roll>span{display:inline-block}
+.fig{display:block;font-family:'Promethee Condensed','DM Sans',sans-serif;font-size:52px;line-height:44px;color:var(--ivory);font-variant-numeric:tabular-nums;white-space:pre}
+/* sessions: the app's session pill, running on your time on this page, and under it what a session records by itself: the apps, and the time in each */
+/* v5 (11 Nov): one thing per stage, in the middle, with air around it. */
+.ss{gap:16px}
+.pill{display:inline-flex;align-items:center;gap:12px;height:48px;padding:0 10px 0 16px;border-radius:999px;background:rgba(6,7,7,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(237,234,228,.14)}
+.pill .lg{width:16px;height:16px;fill:var(--ivory)}
+.pill .t{font-family:'DM Mono',monospace;font-size:16px;line-height:1;color:var(--ivory);white-space:pre}
+.pill .avs{display:flex}
+.pill .avs .av{width:22px;height:22px;font-size:10px;box-shadow:0 0 0 2px #0B0C0C;margin-right:-4px}
+.pill .avs .av:last-child{margin-right:0}
+.pill .pb{width:28px;height:28px;border-radius:50%;background:var(--surf2);display:flex;align-items:center;justify-content:center;gap:3px}
+.pill .pb i{width:3px;height:10px;border-radius:1px;background:var(--ivory)}
+.dk{display:flex;gap:8px;padding:6px;border-radius:11px;background:rgba(6,7,7,.72);box-shadow:inset 0 0 0 1px rgba(237,234,228,.1)}
+.dk img{width:20px;height:20px;border-radius:5px;display:block}
+/* analytics: the week as one figure, the streak, and under them a season of days: each square a day, brighter with the hours. Today is the last one, and it breathes. */
+.an .fig{margin-top:8px}
+.wk{display:flex;align-items:flex-end;gap:6px;height:28px;margin-top:20px}
+.wk i{display:block;width:6px;height:calc(var(--h) * 28px);border-radius:3px;background:rgba(237,234,228,.32);transform-origin:50% 100%;transition:transform .9s var(--e);transition-delay:calc(var(--i) * 70ms + var(--b) * 55ms + .5s)}
+.wk i.now{background:var(--ivory)}
+.tiles:not(.in) .wk i{transform:scaleY(.12)}
+/* leaderboard: the app's ranking (league card, rows, focus rate in the app's orange), and your row, framed, that climbs past the others while you watch */
+.lb{gap:20px}
+.lg2{display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;color:var(--ivory)}
+.lg2 svg{width:20px;height:20px;flex:none;fill:var(--app-ring)}
+.lr{display:grid;grid-template-columns:38px 22px minmax(0,1fr) auto;align-items:center;column-gap:10px;width:100%;max-width:264px;height:40px;padding:0 12px;border-radius:12px;font-size:14px;line-height:1;color:var(--ivory);text-align:left;background:rgba(6,7,7,.82);box-shadow:inset 0 0 0 1px rgba(237,234,228,.26);transition:opacity .5s var(--e),transform .5s var(--e);transition-delay:calc(var(--i) * 70ms + .4s)}
+.lr .r{font-size:13px;font-variant-numeric:tabular-nums}
+.lr .av{width:22px;height:22px;font-size:10px;box-shadow:inset 0 0 0 1.5px var(--app-ring)}
+.lr .h{color:var(--app-accent);font-variant-numeric:tabular-nums}
+.tiles:not(.in) .lr{opacity:0;transform:translateY(8px)}
+/* guilds: one guild's week. Its badge as it sits next to a name in the app, who is in session, the hours of everyone added up, and the place they win together. */
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 10px;border-radius:999px;background:rgba(6,7,7,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(237,234,228,.14);font-size:13px;line-height:1;color:var(--ivory);white-space:nowrap}
+.chip svg{width:12px;height:12px;fill:currentColor}
+.gd .fig{margin-top:20px;font-size:64px;line-height:52px}
+.gd .k{margin-top:12px}
+.gd .k b{font-weight:400;color:var(--ivory)}
+/* arrival, once, when the tiles come into view: each tile rises, its painting comes out of the dark and settles, then its piece of the app arrives */
+.tiles .tile{opacity:0;transform:translateY(12px);transition:opacity .5s var(--e),transform .5s var(--e);transition-delay:calc(var(--i) * 70ms)}
+.tiles.in .tile{opacity:1;transform:none}
+.tiles:not(.in) .tv::after{background:rgba(6,7,7,.94)}
+.tiles:not(.in) .tv .tb{scale:1.22}
+.tiles.in .tv::after{transition:background 1.4s ease calc(var(--i) * 70ms)}
+.tiles.in.done .tv::after{transition:background .5s ease}
+.pill,.dk,.an>.k,.an>.fig,.lg2,.gd>*{transition:opacity .5s var(--e),transform .5s var(--e);transition-delay:calc(var(--i) * 70ms + var(--d,0) * 70ms + .25s)}
+.tiles:not(.in) :is(.pill,.dk,.an>.k,.an>.fig,.lg2,.gd>*){opacity:0;transform:translateY(8px)}
+@media (prefers-reduced-motion: reduce){ .tiles .tile,.tiles :is(.pill,.dk,.an>.k,.an>.fig,.lg2,.lr,.gd>*){opacity:1!important;transform:none!important;transition:none} .wk i{transition:none;transform:none!important} .tv .tb{animation:none;transition:none;scale:1.1!important} .tv::after{transition:none!important;background:rgba(6,7,7,var(--v,.58))!important} }
+.you .pav{color:var(--gray)}
+.you .pav svg{width:20px;height:20px}
+.you .phead{gap:8px}
+.you .ptxt{margin-top:8px}
+.you .poster{box-shadow:0 0 0 1px rgba(237,234,228,.18)}
+.you .rec::after{background:rgba(6,7,7,var(--veil,.42))}
+.you .rec .fig{font-size:max(56px,17cqw)}
+.you .rec .hdl{color:var(--ivory)}
+.youcta{display:flex;flex-direction:column;align-items:stretch;row-gap:16px;margin-top:24px}
+.youcta .live{font-size:14px}
+.dl2{display:flex;justify-content:center;align-items:center;height:56px;padding:0 32px;border-radius:999px;background:var(--ivory);color:#060707;font-size:17px;font-weight:500;text-decoration:none;transition:background .2s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+@media (hover:hover){ .dl2:hover{transform:translateY(-1px)} }
+.dl2:active{transform:scale(.99)}
+/* it arrives when it comes into view: a short rise, once */
+.you.rise{opacity:0;transform:translateY(16px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.you.rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){ .you.rise{opacity:1;transform:none;transition:none} }
+@media (hover:hover){ .dl2:hover{background:#fff} }
+.dl2:focus-visible{outline:1px solid var(--ivory);outline-offset:3px}
+.foot{padding:144px 16px 40px;text-align:center}
+.flogo{display:flex;justify-content:center;margin-bottom:32px}
+.flogo .wm{height:16px}
+.flinks{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 24px;font-size:13px;line-height:1.43}
+.flinks a{color:var(--gray2);text-decoration:none}
+.copyr{margin-top:12px;font-size:13px;line-height:1.43;color:var(--gray2)}
+@media (max-width: 699px){
+  .sec{padding-top:128px;padding-left:16px;padding-right:16px}
+  .post{grid-template-columns:36px minmax(0,1fr)}
+  .pav{width:36px;height:36px;font-size:14px}
+  .ptools{display:none}
+  .cg span:last-child{display:none}
+  .poster .dock img,.poster .dock .meetk{width:22px;height:22px}
+  .foot{padding-top:112px}
+  .gate{margin:32px -8px 0;padding:16px;border-radius:24px}
+  .tiles{grid-template-columns:minmax(0,1fr)}
+  .sub .alt{display:none}
+  .dl2{height:48px;padding:0 24px;font-size:16px}
+}
+@media (hover:hover){ .links a:hover,.flinks a:hover{color:var(--ivory)} }
+/* v6: on large screens the page grows with the screen instead of floating in black */
+@media (min-width: 1800px){ .sec,.foot,.nav{zoom:1.2} }
+@media (min-width: 2300px){ .sec,.foot,.nav{zoom:1.4} }
+
+/* ---------- motion (9 Nov) ---------- */
+/* the opening: everything waits in the dark until the intro script takes it (three variants, ?intro=a|b|c) */
+html.intro .band,html.intro .copy h1 span,html.intro .copy p,html.intro .row .cta,html.intro .row .live,html.intro .nav{opacity:0}
+.scene{will-change:transform}
+/* ?v=hero: the first screen alone (the title, the button, the nav), nothing under it */
+.links .solo-only{display:none}
+html.solo{--text:calc(var(--gap) + var(--h1) * 2.08 + 32px + var(--hl) * 3)}
+html.solo .sec,html.solo .foot,html.solo .row .live,html.solo .copy p,html.solo .send .note{display:none}
+html.solo .links .solo-only{display:inline}
+html.solo .hero{min-height:var(--vh)}
+html.solo .send.sent .note{display:block}
+@media (max-width: 699px){ html.solo{--at:max(76px, calc((100svh - 352px) * .4))} html.solo .links a.on{display:none} }
+/* the counter: the figure rolls when it changes */
+.live b.n{display:inline-grid;overflow:hidden;vertical-align:bottom}
+.live b.n>span{grid-area:1/1;display:block}
+/* the feed: each post arrives when it comes into view, its duration fills from zero */
+.post.rv{opacity:0;transform:translateY(24px);transition:opacity .4s cubic-bezier(.23,1,.32,1),transform .4s cubic-bezier(.23,1,.32,1)}
+.post.rv.in{opacity:1;transform:none}
+.poster img.bg{transition:transform 1.6s cubic-bezier(.23,1,.32,1)}
+@media (hover:hover){ .poster:hover img.bg{transform:scale(1.03)} }
+.pacts .a.heart{cursor:pointer;user-select:none;-webkit-user-select:none}
+.pacts .a.heart svg{transition:transform .2s cubic-bezier(.23,1,.32,1)}
+.pacts .a.heart:active svg{transform:scale(.85)}
+@media (hover:hover){ .pacts .a.heart:hover{color:var(--ivory)} .pacts .a.heart.liked:hover{color:var(--app-accent)} }
+.dl2:active{transform:scale(.97)}
+.you .rec::after{transition:background 1.2s ease}
+@media (prefers-reduced-motion: reduce){ .post.rv{opacity:1;transform:none;transition:none} .poster img.bg{transition:none} }
+</style>
+</head>
+<body>
+<section class="hero" aria-label="Promethee">
+  <div class="band"><div class="scene"></div><picture><source media="(min-width: 1441px)" type="image/avif" srcset="hero/f10_arches_5k.avif"><source media="(min-width: 1441px)" type="image/webp" srcset="hero/f10_arches_5k.webp"><source type="image/avif" srcset="hero/f10_arches_2k.avif"><img src="hero/f10_arches_2k.webp" alt="" width="2560" height="1429"></picture></div>
+  <header class="nav">
+    <a class="brand" href="#" aria-label="Promethee"><span class="wm" aria-hidden="true"></span></a>
+    <nav class="links"><a href="#">Leaderboard</a><a class="solo-only" href="#">Feed</a><a href="#">Guilds</a><a class="on" href="#">Download</a></nav>
+  </header>
+  <div class="copy">
+    <h1><span>Work is addictive when</span> <span>you're not alone.</span></h1>
+    <p>We measure your real work and rank you against everyone.</p>
+  </div>
+  <div class="row">
+    <div class="live"><span class="dot"></span><b class="n" id="live">412</b><span>in session right now</span></div>
+    <div class="cta"><a class="btn" data-os href="#">Download for Mac and Windows</a><form class="send" novalidate><div class="f"><input type="email" name="email" placeholder="Your email" autocomplete="email" aria-label="Your email" required><button type="submit">Send me the link</button></div><p class="note">A Mac and Windows app. Get the link by email.</p></form></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t-feed">
+  <div class="sh"><p class="kick">Activity</p><h2 class="h2" id="t-feed">Real work, posted when it ends.</h2></div>
+  <div class="feedcol">
+    <article class="post">
+      <span class="pav">N</span>
+      <div class="pbody">
+        <div class="phead"><span class="pname">Numa</span><span class="sep">·</span><span class="ptime">10h</span><span class="ptools"><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h8M7 3.5V5m2.5 0c-.6 3-2.6 5.6-5.5 7m1.5-4.5c1 1.7 2.5 3 4.3 3.8M10.5 17l3-7.5 3 7.5m-5-2h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><circle cx="4.5" cy="10" r="1.4" fill="currentColor"/><circle cx="10" cy="10" r="1.4" fill="currentColor"/><circle cx="15.5" cy="10" r="1.4" fill="currentColor"/></svg></span></div>
+        <div class="ptxt">I've been stuck all day on a single issue.<br>I can't move on to the next thing until this problem is solved.<br><br>Extremely frustrating day, I'm pissed off</div>
+        <div class="pmeta"><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M8 4.5V8l2.2 1.4" stroke="#060707" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>2h 3m</span><span class="dotb"></span><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5V3M3.8 7.2 8 3l4.2 4.2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>2,306 XP</span><span class="dotb"></span><span class="apps"><img class="app inv" src="img/apps/grok.png" alt=""><img class="app" src="img/apps/dia.png" alt=""></span></div>
+        <div class="pacts"><span class="a"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16.5s-6.5-3.9-6.5-8.6C3.5 5.5 5.2 4 7.2 4c1.3 0 2.3.7 2.8 1.6C10.5 4.7 11.5 4 12.8 4c2 0 3.7 1.5 3.7 3.9 0 4.7-6.5 8.6-6.5 8.6z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>40</span><span class="a"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5c3.9 0 6.5 2.6 6.5 6s-2.6 6-6.5 6c-1 0-1.9-.2-2.7-.5L3.8 16l.9-3.1C4 11.9 3.5 10.8 3.5 9.5c0-3.4 2.6-6 6.5-6z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>6</span><span class="cg"><span class="stk"><i>N</i><i>H</i><i>R</i></span><span><b>N.</b> and 39 others</span></span></div>
+      </div>
+    </article>
+    <article class="post">
+      <span class="pav">M</span>
+      <div class="pbody">
+        <div class="phead"><span class="pname">Miron</span><span class="sep">·</span><span class="pbadge"><svg class="ib" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 11.5 6 7l3 3 5.5-5.5M10.5 4.5h4v4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Popular post</span><span class="sep">·</span><span class="ptime">3d</span><span class="ptools"><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h8M7 3.5V5m2.5 0c-.6 3-2.6 5.6-5.5 7m1.5-4.5c1 1.7 2.5 3 4.3 3.8M10.5 17l3-7.5 3 7.5m-5-2h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><circle cx="4.5" cy="10" r="1.4" fill="currentColor"/><circle cx="10" cy="10" r="1.4" fill="currentColor"/><circle cx="15.5" cy="10" r="1.4" fill="currentColor"/></svg></span></div>
+        <div class="ptxt">the first session in season 2!<br>many things are coming<br>would you love to have a web app guys? and if so, why?</div>
+        <figure class="poster"><img class="bg" src="img/posters/radiant-figure.jpg" alt="" loading="lazy" decoding="async"><span class="bm"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.83077C4.70326 1.83077 2.66657 2.94032 1.4 4.65089C1.79903 4.96731 2.16365 5.3253 2.48691 5.71823C2.67518 5.94693 2.84938 6.18749 3.0082 6.43862C3.28531 6.87607 3.51609 7.34553 3.6936 7.84019C3.82016 8.19206 3.91959 8.55681 3.98973 8.93177C4.22482 9.06683 4.45163 9.21454 4.66884 9.37434C4.89714 9.54187 5.1152 9.72275 5.32165 9.91584C5.98814 10.5382 6.53545 11.286 6.92553 12.1216C6.93908 12.1506 6.96805 12.1692 7 12.1692C7.03195 12.1692 7.06092 12.1506 7.07447 12.1216C7.46455 11.286 8.01187 10.5382 8.67835 9.91584C8.88481 9.72275 9.10286 9.54187 9.33115 9.37434C9.54838 9.21454 9.77519 9.06683 10.0103 8.93177C10.0804 8.55681 10.1798 8.19206 10.3064 7.84019C10.4839 7.34553 10.7147 6.87607 10.9918 6.43862C11.1506 6.18749 11.3248 5.94693 11.5131 5.71823C11.8364 5.3253 12.201 4.96731 12.6 4.65089C11.3334 2.94032 9.29676 1.83077 7 1.83077ZM7 10.5741C6.65141 10.0749 6.24709 9.61738 5.79612 9.21045C5.7981 9.20615 5.80008 9.20202 5.80193 9.19773C5.8843 9.01455 5.94585 8.81996 5.98374 8.61716C6.01268 8.46215 6.02791 8.30238 6.02791 8.13898C6.02791 7.84927 5.98024 7.5706 5.89226 7.31058C5.8762 7.27279 5.86229 7.23455 5.8504 7.19531C5.81614 7.0835 5.79777 6.96561 5.79777 6.84343C5.79777 6.18157 6.3361 5.645 7.00017 5.645C7.66424 5.645 8.20256 6.18157 8.20256 6.84343C8.20256 6.96561 8.18419 7.0835 8.1501 7.19448C8.13804 7.23455 8.12413 7.27279 8.10824 7.31009C8.02009 7.5706 7.97242 7.84927 7.97242 8.13898C7.97242 8.30238 7.98765 8.46215 8.01659 8.61716C8.05449 8.81996 8.11604 9.01455 8.1984 9.19773C8.20025 9.20202 8.20223 9.20615 8.20422 9.21045C7.75324 9.61738 7.34892 10.0749 7.00033 10.5741H7Z"/></svg></span><span class="hdl">@miron</span><span class="big">6H 5M</span><span class="lab">WORK SESSION</span><span class="dock"><img src="img/apps/orca.png" alt=""><span class="meetk" aria-hidden="true"></span></span></figure>
+        <div class="pmeta"><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M8 4.5V8l2.2 1.4" stroke="#060707" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>6h 6m</span><span class="dotb"></span><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5V3M3.8 7.2 8 3l4.2 4.2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>283.4K tokens</span><span class="dotb"></span><span class="apps"><img class="app" src="img/apps/orca.png" alt=""><span class="app mask" aria-hidden="true"></span></span></div>
+        <div class="pacts"><span class="a liked"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16.5s-6.5-3.9-6.5-8.6C3.5 5.5 5.2 4 7.2 4c1.3 0 2.3.7 2.8 1.6C10.5 4.7 11.5 4 12.8 4c2 0 3.7 1.5 3.7 3.9 0 4.7-6.5 8.6-6.5 8.6z" fill="currentColor"/></svg>74</span><span class="a"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5c3.9 0 6.5 2.6 6.5 6s-2.6 6-6.5 6c-1 0-1.9-.2-2.7-.5L3.8 16l.9-3.1C4 11.9 3.5 10.8 3.5 9.5c0-3.4 2.6-6 6.5-6z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>7</span><span class="cg"><span class="stk"><i>H</i><i>M</i><i>A</i></span><span><b>Heaven</b> and 73 others</span></span></div>
+      </div>
+    </article>
+    <article class="post">
+      <span class="pav">T</span>
+      <div class="pbody">
+        <div class="phead"><span class="pname">totoche</span><span class="sep">·</span><span class="ptime">4d</span><span class="ptools"><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h8M7 3.5V5m2.5 0c-.6 3-2.6 5.6-5.5 7m1.5-4.5c1 1.7 2.5 3 4.3 3.8M10.5 17l3-7.5 3 7.5m-5-2h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="it" viewBox="0 0 20 20" aria-hidden="true"><circle cx="4.5" cy="10" r="1.4" fill="currentColor"/><circle cx="10" cy="10" r="1.4" fill="currentColor"/><circle cx="15.5" cy="10" r="1.4" fill="currentColor"/></svg></span></div>
+        <div class="ptxt">just applied to YC</div>
+        <figure class="poster"><img class="bg" src="img/posters/ancient-tower.jpg" alt="" loading="lazy" decoding="async"><span class="bm"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.83077C4.70326 1.83077 2.66657 2.94032 1.4 4.65089C1.79903 4.96731 2.16365 5.3253 2.48691 5.71823C2.67518 5.94693 2.84938 6.18749 3.0082 6.43862C3.28531 6.87607 3.51609 7.34553 3.6936 7.84019C3.82016 8.19206 3.91959 8.55681 3.98973 8.93177C4.22482 9.06683 4.45163 9.21454 4.66884 9.37434C4.89714 9.54187 5.1152 9.72275 5.32165 9.91584C5.98814 10.5382 6.53545 11.286 6.92553 12.1216C6.93908 12.1506 6.96805 12.1692 7 12.1692C7.03195 12.1692 7.06092 12.1506 7.07447 12.1216C7.46455 11.286 8.01187 10.5382 8.67835 9.91584C8.88481 9.72275 9.10286 9.54187 9.33115 9.37434C9.54838 9.21454 9.77519 9.06683 10.0103 8.93177C10.0804 8.55681 10.1798 8.19206 10.3064 7.84019C10.4839 7.34553 10.7147 6.87607 10.9918 6.43862C11.1506 6.18749 11.3248 5.94693 11.5131 5.71823C11.8364 5.3253 12.201 4.96731 12.6 4.65089C11.3334 2.94032 9.29676 1.83077 7 1.83077ZM7 10.5741C6.65141 10.0749 6.24709 9.61738 5.79612 9.21045C5.7981 9.20615 5.80008 9.20202 5.80193 9.19773C5.8843 9.01455 5.94585 8.81996 5.98374 8.61716C6.01268 8.46215 6.02791 8.30238 6.02791 8.13898C6.02791 7.84927 5.98024 7.5706 5.89226 7.31058C5.8762 7.27279 5.86229 7.23455 5.8504 7.19531C5.81614 7.0835 5.79777 6.96561 5.79777 6.84343C5.79777 6.18157 6.3361 5.645 7.00017 5.645C7.66424 5.645 8.20256 6.18157 8.20256 6.84343C8.20256 6.96561 8.18419 7.0835 8.1501 7.19448C8.13804 7.23455 8.12413 7.27279 8.10824 7.31009C8.02009 7.5706 7.97242 7.84927 7.97242 8.13898C7.97242 8.30238 7.98765 8.46215 8.01659 8.61716C8.05449 8.81996 8.11604 9.01455 8.1984 9.19773C8.20025 9.20202 8.20223 9.20615 8.20422 9.21045C7.75324 9.61738 7.34892 10.0749 7.00033 10.5741H7Z"/></svg></span><span class="hdl">@totoche</span><span class="big">13H 15M</span><span class="lab">WORK SESSION</span><span class="dock"><img src="img/apps/conductor.png" alt=""><img src="img/apps/claude.png" alt=""></span></figure>
+        <div class="pmeta"><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M8 4.5V8l2.2 1.4" stroke="#060707" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>13h 15m</span><span class="dotb"></span><span class="m"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5V3M3.8 7.2 8 3l4.2 4.2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>2.1M tokens</span><span class="dotb"></span><span class="apps"><img class="app" src="img/apps/conductor.png" alt=""><img class="app" src="img/apps/claude.png" alt=""></span></div>
+        <div class="pacts"><span class="a"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16.5s-6.5-3.9-6.5-8.6C3.5 5.5 5.2 4 7.2 4c1.3 0 2.3.7 2.8 1.6C10.5 4.7 11.5 4 12.8 4c2 0 3.7 1.5 3.7 3.9 0 4.7-6.5 8.6-6.5 8.6z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>36</span><span class="a"><svg class="ia" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5c3.9 0 6.5 2.6 6.5 6s-2.6 6-6.5 6c-1 0-1.9-.2-2.7-.5L3.8 16l.9-3.1C4 11.9 3.5 10.8 3.5 9.5c0-3.4 2.6-6 6.5-6z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>15</span><span class="cg"><span class="stk"><i>R</i><i>K</i><i>W</i></span><span><b>Romu</b> and 35 others</span></span></div>
+      </div>
+    </article>
+    <section class="gate you rise" aria-label="Your session">
+      <p class="lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>The rest of the feed lives in the app</p>
+      <div class="post me">
+        <span class="pav" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.75 16.5c.9-2.9 3.3-4.5 6.25-4.5s5.35 1.6 6.25 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <div class="pbody">
+          <div class="phead"><span class="pname">You</span><span class="ptime">now</span></div>
+          <div class="ptxt">You have been reading for a while.<br>In the app, this is a session.</div>
+        </div>
+      </div>
+      <figure class="poster rec"><img class="bg" src="img/posters/misty-canyon.jpg" alt="" loading="lazy" decoding="async"><span class="bm"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.83077C4.70326 1.83077 2.66657 2.94032 1.4 4.65089C1.79903 4.96731 2.16365 5.3253 2.48691 5.71823C2.67518 5.94693 2.84938 6.18749 3.0082 6.43862C3.28531 6.87607 3.51609 7.34553 3.6936 7.84019C3.82016 8.19206 3.91959 8.55681 3.98973 8.93177C4.22482 9.06683 4.45163 9.21454 4.66884 9.37434C4.89714 9.54187 5.1152 9.72275 5.32165 9.91584C5.98814 10.5382 6.53545 11.286 6.92553 12.1216C6.93908 12.1506 6.96805 12.1692 7 12.1692C7.03195 12.1692 7.06092 12.1506 7.07447 12.1216C7.46455 11.286 8.01187 10.5382 8.67835 9.91584C8.88481 9.72275 9.10286 9.54187 9.33115 9.37434C9.54838 9.21454 9.77519 9.06683 10.0103 8.93177C10.0804 8.55681 10.1798 8.19206 10.3064 7.84019C10.4839 7.34553 10.7147 6.87607 10.9918 6.43862C11.1506 6.18749 11.3248 5.94693 11.5131 5.71823C11.8364 5.3253 12.201 4.96731 12.6 4.65089C11.3334 2.94032 9.29676 1.83077 7 1.83077ZM7 10.5741C6.65141 10.0749 6.24709 9.61738 5.79612 9.21045C5.7981 9.20615 5.80008 9.20202 5.80193 9.19773C5.8843 9.01455 5.94585 8.81996 5.98374 8.61716C6.01268 8.46215 6.02791 8.30238 6.02791 8.13898C6.02791 7.84927 5.98024 7.5706 5.89226 7.31058C5.8762 7.27279 5.86229 7.23455 5.8504 7.19531C5.81614 7.0835 5.79777 6.96561 5.79777 6.84343C5.79777 6.18157 6.3361 5.645 7.00017 5.645C7.66424 5.645 8.20256 6.18157 8.20256 6.84343C8.20256 6.96561 8.18419 7.0835 8.1501 7.19448C8.13804 7.23455 8.12413 7.27279 8.10824 7.31009C8.02009 7.5706 7.97242 7.84927 7.97242 8.13898C7.97242 8.30238 7.98765 8.46215 8.01659 8.61716C8.05449 8.81996 8.11604 9.01455 8.1984 9.19773C8.20025 9.20202 8.20223 9.20615 8.20422 9.21045C7.75324 9.61738 7.34892 10.0749 7.00033 10.5741H7Z"/></svg></span><span class="hdl">@you</span><div class="card"><i></i><i></i><i></i><i></i><span class="ser">A session, in progress.</span><span class="fig" id="onpage">0S</span><span class="mono lab2">Time on this page</span><span class="mono span" id="since"></span></div></figure>
+      <div class="youcta"><a class="dl2" href="#"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2.5v8.5m0 0L5.5 7.5M9 11l3.5-3.5M3.5 14.5h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-os>Download for Mac and Windows</span></a><form class="send" novalidate><div class="f"><input type="email" name="email" placeholder="Your email" autocomplete="email" aria-label="Your email" required><button type="submit">Send me the link</button></div><p class="note">A Mac and Windows app. Get the link by email.</p></form><div class="sub"><a class="alt" data-alt href="#" hidden>Also on Windows</a><div class="live"><span class="dot"></span><b class="n" id="live2">412</b><span>in session right now</span></div></div></div>
+      <p class="more">More than a feed</p>
+      <div class="tiles">
+        <div class="tile" style="--i:0"><div class="tv" style="--v:.52" aria-hidden="true"><img class="tb" src="img/posters/radiant-figure.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 42%"><div class="st ss"><span class="pill"><svg class="lg" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.83077C4.70326 1.83077 2.66657 2.94032 1.4 4.65089C1.79903 4.96731 2.16365 5.3253 2.48691 5.71823C2.67518 5.94693 2.84938 6.18749 3.0082 6.43862C3.28531 6.87607 3.51609 7.34553 3.6936 7.84019C3.82016 8.19206 3.91959 8.55681 3.98973 8.93177C4.22482 9.06683 4.45163 9.21454 4.66884 9.37434C4.89714 9.54187 5.1152 9.72275 5.32165 9.91584C5.98814 10.5382 6.53545 11.286 6.92553 12.1216C6.93908 12.1506 6.96805 12.1692 7 12.1692C7.03195 12.1692 7.06092 12.1506 7.07447 12.1216C7.46455 11.286 8.01187 10.5382 8.67835 9.91584C8.88481 9.72275 9.10286 9.54187 9.33115 9.37434C9.54838 9.21454 9.77519 9.06683 10.0103 8.93177C10.0804 8.55681 10.1798 8.19206 10.3064 7.84019C10.4839 7.34553 10.7147 6.87607 10.9918 6.43862C11.1506 6.18749 11.3248 5.94693 11.5131 5.71823C11.8364 5.3253 12.201 4.96731 12.6 4.65089C11.3334 2.94032 9.29676 1.83077 7 1.83077ZM7 10.5741C6.65141 10.0749 6.24709 9.61738 5.79612 9.21045C5.7981 9.20615 5.80008 9.20202 5.80193 9.19773C5.8843 9.01455 5.94585 8.81996 5.98374 8.61716C6.01268 8.46215 6.02791 8.30238 6.02791 8.13898C6.02791 7.84927 5.98024 7.5706 5.89226 7.31058C5.8762 7.27279 5.86229 7.23455 5.8504 7.19531C5.81614 7.0835 5.79777 6.96561 5.79777 6.84343C5.79777 6.18157 6.3361 5.645 7.00017 5.645C7.66424 5.645 8.20256 6.18157 8.20256 6.84343C8.20256 6.96561 8.18419 7.0835 8.1501 7.19448C8.13804 7.23455 8.12413 7.27279 8.10824 7.31009C8.02009 7.5706 7.97242 7.84927 7.97242 8.13898C7.97242 8.30238 7.98765 8.46215 8.01659 8.61716C8.05449 8.81996 8.11604 9.01455 8.1984 9.19773C8.20025 9.20202 8.20223 9.20615 8.20422 9.21045C7.75324 9.61738 7.34892 10.0749 7.00033 10.5741H7Z"/></svg><span class="t roll" id="tv-t">0:00:00</span><span class="avs"><i class="av">N</i><i class="av">M</i><i class="av">T</i></span><span class="pb"><i></i><i></i></span></span><span class="dk" style="--d:2"><img src="img/apps/cursor.png" alt=""><img src="img/apps/claude.png" alt=""><img src="img/apps/figma.png" alt=""></span></div></div><div class="tx"><b class="tt">Sessions</b><span class="td">Your real work time, tracked automatically.</span></div></div>
+        <div class="tile" style="--i:1"><div class="tv" style="--v:.8" aria-hidden="true"><img class="tb" src="img/posters/skybeam.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 60%"><div class="st an"><span class="k">This week</span><span class="fig roll" id="tv-a" style="--d:1">0H 00M</span><div class="wk" id="tv-b"></div></div></div><div class="tx"><b class="tt">Analytics</b><span class="td">Hours, tokens and streaks, week after week.</span></div></div>
+        <div class="tile" style="--i:2"><div class="tv" style="--v:.8" aria-hidden="true"><img class="tb" src="img/posters/ancient-tower.jpg" alt="" loading="lazy" decoding="async" style="object-position:60% 30%"><div class="st lb"><div class="lg2"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14.00 0.00L15.19 9.56L21.00 1.88L17.25 10.75L26.12 7.00L18.44 12.81L28.00 14.00L18.44 15.19L26.12 21.00L17.25 17.25L21.00 26.12L15.19 18.44L14.00 28.00L12.81 18.44L7.00 26.12L10.75 17.25L1.88 21.00L9.56 15.19L0.00 14.00L9.56 12.81L1.88 7.00L10.75 10.75L7.00 1.88L12.81 9.56z"/></svg>Gold league</div><div class="lr me"><span class="r roll" id="tv-r">411th</span><i class="av">Y</i><span>You</span><span class="h roll" id="tv-l">7 186 FR</span></div></div></div><div class="tx"><b class="tt">Leaderboard</b><span class="td">See where you rank against everyone.</span></div></div>
+        <div class="tile" style="--i:3"><div class="tv" style="--v:.6" aria-hidden="true"><img class="tb" src="img/posters/misty-canyon.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 22%"><div class="st gd"><span class="chip"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.83077C4.70326 1.83077 2.66657 2.94032 1.4 4.65089C1.79903 4.96731 2.16365 5.3253 2.48691 5.71823C2.67518 5.94693 2.84938 6.18749 3.0082 6.43862C3.28531 6.87607 3.51609 7.34553 3.6936 7.84019C3.82016 8.19206 3.91959 8.55681 3.98973 8.93177C4.22482 9.06683 4.45163 9.21454 4.66884 9.37434C4.89714 9.54187 5.1152 9.72275 5.32165 9.91584C5.98814 10.5382 6.53545 11.286 6.92553 12.1216C6.93908 12.1506 6.96805 12.1692 7 12.1692C7.03195 12.1692 7.06092 12.1506 7.07447 12.1216C7.46455 11.286 8.01187 10.5382 8.67835 9.91584C8.88481 9.72275 9.10286 9.54187 9.33115 9.37434C9.54838 9.21454 9.77519 9.06683 10.0103 8.93177C10.0804 8.55681 10.1798 8.19206 10.3064 7.84019C10.4839 7.34553 10.7147 6.87607 10.9918 6.43862C11.1506 6.18749 11.3248 5.94693 11.5131 5.71823C11.8364 5.3253 12.201 4.96731 12.6 4.65089C11.3334 2.94032 9.29676 1.83077 7 1.83077ZM7 10.5741C6.65141 10.0749 6.24709 9.61738 5.79612 9.21045C5.7981 9.20615 5.80008 9.20202 5.80193 9.19773C5.8843 9.01455 5.94585 8.81996 5.98374 8.61716C6.01268 8.46215 6.02791 8.30238 6.02791 8.13898C6.02791 7.84927 5.98024 7.5706 5.89226 7.31058C5.8762 7.27279 5.86229 7.23455 5.8504 7.19531C5.81614 7.0835 5.79777 6.96561 5.79777 6.84343C5.79777 6.18157 6.3361 5.645 7.00017 5.645C7.66424 5.645 8.20256 6.18157 8.20256 6.84343C8.20256 6.96561 8.18419 7.0835 8.1501 7.19448C8.13804 7.23455 8.12413 7.27279 8.10824 7.31009C8.02009 7.5706 7.97242 7.84927 7.97242 8.13898C7.97242 8.30238 7.98765 8.46215 8.01659 8.61716C8.05449 8.81996 8.11604 9.01455 8.1984 9.19773C8.20025 9.20202 8.20223 9.20615 8.20422 9.21045C7.75324 9.61738 7.34892 10.0749 7.00033 10.5741H7Z"/></svg>Promethee Team</span><span class="fig roll" id="tv-g" style="--d:1">1 190H</span><span class="k" style="--d:2"><b class="roll" id="tv-k">3rd</b> of 86 guilds</span></div></div><div class="tx"><b class="tt">Guilds</b><span class="td">Work alongside your team and climb together.</span></div></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+
+<footer class="foot">
+  <a class="flogo" href="#" aria-label="Promethee"><span class="wm" aria-hidden="true"></span></a>
+  <nav class="flinks" aria-label="Footer"><a href="#">FAQ</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Terms (Consumer)</a><a href="#">Terms (Commercial)</a><a href="#">Legal</a><a href="#">X</a><a href="#">English</a><a href="#">Français</a></nav>
+  <p class="copyr">© 2026 Promethee Technologies</p>
+</footer>
+<script>
+// your post: the time spent on this page, counted like a session (minutes, then hours and minutes), only while the page is visible
+(function(){ var el=document.getElementById('onpage'), t=0, last=Date.now(), d=new Date(), h=d.getHours()%12||12, m=d.getMinutes();
+  document.getElementById('since').textContent=h+':'+(m<10?'0':'')+m+(d.getHours()<12?' AM':' PM')+' to now';
+  function fmt(s){ var m=Math.floor(s/60), h=Math.floor(m/60); return h?h+'H '+(m%60)+'M':(m<1?Math.floor(s)+'S':m+'M'); }
+  setInterval(function(){ var n=Date.now(); if(!document.hidden) t+=(n-last)/1000; last=n; el.textContent=fmt(t); window.__onpage=t; },1000); })();
+</script>
+
+<script>
+// the download button names the visitor's system (one click, one file); the phone form answers in place (not wired to a mailer yet)
+(function(){ var ua=navigator.userAgent||'', pf=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'', os=/Mac/i.test(pf)&&!/iPhone|iPad/i.test(ua)?'Mac':/Win/i.test(pf)?'Windows':'';
+  if(os){ Array.prototype.forEach.call(document.querySelectorAll('[data-os]'),function(a){ a.textContent='Download for '+os; }); var al=document.querySelector('[data-alt]'); if(al){ al.textContent='Also on '+(os==='Mac'?'Windows':'Mac'); al.hidden=false; } }
+  Array.prototype.forEach.call(document.querySelectorAll('.send'),function(f){ f.addEventListener('submit',function(e){ e.preventDefault(); var i=f.querySelector('input'); if(!/^\S+@\S+\.\S+$/.test(i.value)){ i.focus(); return; } f.classList.add('sent'); f.querySelector('.note').textContent='Link sent. Open it on your computer.'; }); }); })();
+</script>
+<script>
+// the four tiles. The session pill runs on the visitor's own time (each figure rolls). The rest plays once when the tiles come into view:
+// the week counts up and its seven days rise, your rank climbs two places, the guild's hours add up and it takes a place.
+(function(){ var $=function(i){ return document.getElementById(i); }, T=$('tv-t'), A=$('tv-a'), H=$('tv-b'), Rk=$('tv-r'), Fr=$('tv-l'), Gf=$('tv-g'), K=$('tv-k'), G=document.querySelector('.tiles');
+  var RM=matchMedia('(prefers-reduced-motion: reduce)').matches, day=(new Date().getDay()+6)%7, seen=false, wk=0, Q=0;
+  function p2(n){ return (n<10?'0':'')+n; }
+  function sp(n){ return String(n).replace(/\B(?=(\d{3})+$)/g,' '); }
+  // a figure that changes rolls up into place, the others do not move
+  function roll(el,str){ var k=el.children, i; if(k.length!==str.length){ el.textContent=''; for(i=0;i<str.length;i++){ var e=document.createElement('span'); e.textContent=str[i]; el.appendChild(e); } return; }
+    for(i=0;i<str.length;i++) if(k[i].textContent!==str[i]){ k[i].textContent=str[i]; if(seen&&!RM&&!Q) k[i].animate([{transform:'translateY(45%)',opacity:0},{transform:'none',opacity:1}],{duration:240,easing:'cubic-bezier(.23,1,.32,1)'}); } }
+  function count(from,to,ms,fn){ if(RM){ fn(to); return; } var t0=performance.now(); Q++; (function f(now){ var q=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-q,4); fn(Math.round(from+(to-from)*e)); if(q<1) requestAnimationFrame(f); else Q--; })(t0); }
+  // the week: seven days, it stops today
+  var W=[.55,.8,.45,1,.7,.35,.5], h='', c; for(c=0;c<7;c++) h+='<i'+(c===day?' class="now"':'')+' style="--b:'+c+';--h:'+(c>day?.12:W[c])+'"></i>'; H.innerHTML=h;
+  function week(){ var m=wk+Math.floor((window.__onpage||0)/60); roll(A,Math.floor(m/60)+'H '+p2(m%60)+'M'); }
+  function tick(){ var t=Math.floor(window.__onpage||0); roll(T,Math.floor(t/3600)+':'+p2(Math.floor(t/60)%60)+':'+p2(t%60)); if(seen&&wk===2292) week(); }
+  roll(A,'0H 00M'); roll(Gf,'1 190H'); roll(K,'3rd'); roll(Rk,'411th'); roll(Fr,'7 186 FR'); tick(); setInterval(tick,1000);
+  // your row: it passes the row above, twice
+  function climb(r,fr){ roll(Rk,r+'th'); roll(Fr,fr); }
+  function show(){ seen=true; G.classList.add('in');
+    if(RM){ wk=2292; week(); roll(Gf,'1 284H'); roll(K,'2nd'); climb(409,'7 190 FR'); G.classList.add('done'); return; }
+    setTimeout(function(){ count(0,2292,1400,function(v){ wk=v; week(); }); },450);
+    setTimeout(function(){ count(1190,1284,1600,function(v){ roll(Gf,sp(v)+'H'); }); },700);
+    setTimeout(function(){ roll(K,'2nd'); },2400);
+    setTimeout(function(){ climb(410,'7 188 FR'); },1900); setTimeout(function(){ climb(409,'7 190 FR'); },3500);
+    setTimeout(function(){ G.classList.add('done'); },2600); }
+  if(!('IntersectionObserver' in window)||RM){ show(); return; }
+  var io=new IntersectionObserver(function(es){ if(es[0].isIntersecting){ io.disconnect(); show(); } },{threshold:.25}); io.observe(G); })();
+</script>
+<script>(function(){ var e=document.querySelector('.you'); if(!('IntersectionObserver' in window)){ e.classList.add('in'); return; } var io=new IntersectionObserver(function(es){ if(es[0].isIntersecting){ e.classList.add('in'); io.disconnect(); } },{threshold:.15}); io.observe(e); })();</script>
+<script src="hero/coast.js"></script>
+<script src="hero/globe.js"></script>
+<script>
+// the planet (variant B, Réseau, chosen 9 Nov): hero/globe.js in the scene (1440 x 900, as wide as the f10, top on top), seen through the openings of the f10
+(function(){
+  var scene=document.querySelector('.scene');
+  var OPEN=[{x0:263,x1:519,y0:335,y1:646},{x0:578,x1:864,y0:335,y1:646},{x0:923,x1:1178,y0:335,y1:646}];
+  function ratio(){ var w=scene.getBoundingClientRect().width; return Math.max(1,Math.min(innerWidth<700?2:3.2, w/1440*(window.devicePixelRatio||1))); }
+  var Q=new URLSearchParams(location.search), g=null, cur=0;
+  function boot(){ if(g) g.stop(); cur=ratio(); g=window.PromGlobe.start(scene,{mode:'web', constellation:true, cstep:2, cityMin:0.25, cityLink:8, lineAlpha:0.26, figAlpha:0.30, starAlpha:0.85, horizon:395, lat0:30, lon0:4, maxArc:24, people:0, terrain:0, coastAlpha:0, glow:0.35, links:4, lift:[0.006,0.02], linkAlpha:0.7, linkWidth:1, rate:0.5, pulses:true, relay:true, prefill:3, life:[14,30], spin:0.0025, dpr:cur, openings:OPEN, hold:!g&&document.documentElement.classList.contains('intro')}); window.__globe=g; if(Q.get('t')) g.render(parseFloat(Q.get('t'))); }
+  boot();
+  var rt=0; addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){ var r=ratio(); if(r>cur*1.2||r<cur/1.6) boot(); },300); });
+  // the counter: it moves by one now and then, up or down, around 412
+  var C=412, v=C, RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // the figure rolls: the old one leaves upward (or downward), the new one comes in from the other side
+  function roll(b,val,up){ if(!b) return; var old=b.lastElementChild||null, n=document.createElement('span'); n.textContent=String(val);
+    if(!old||RM){ b.textContent=''; b.appendChild(n); return; } b.appendChild(n); var d=up?1:-1, E='cubic-bezier(.23,1,.32,1)';
+    old.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY('+(-d*100)+'%)',opacity:0}],{duration:160,easing:E,fill:'forwards'}).onfinish=function(){ old.remove(); };
+    n.animate([{transform:'translateY('+(d*100)+'%)',opacity:0},{transform:'translateY(0)',opacity:1}],{duration:220,easing:E}); }
+  function show(val,up){ roll(document.getElementById('live'),val,up); roll(document.getElementById('live2'),val,up); }
+  ['live','live2'].forEach(function(id){ var b=document.getElementById(id); if(b){ var t=b.textContent; b.textContent=''; var n=document.createElement('span'); n.textContent=t; b.appendChild(n); } });
+  window.__count={ set:function(val){ v=val; show(val,true); }, roll:show };
+  // one more person in session: the figure rolls up and a link leaves on the planet
+  function step(){ var pu=Math.max(.15,Math.min(.85,.5-.08*(v-C))), up=Math.random()<pu; v+=up?1:-1; v=Math.max(C-6,Math.min(C+6,v)); show(v,up); if(up&&g&&g.link) g.link(); setTimeout(step,4000+7000*Math.random()); }
+  setTimeout(step,6000+5000*Math.random());
+})();
+</script>
+<script>
+// ---------- motion (9 Nov): the opening (three variants), the planet that sets as you scroll, the feed that arrives, the heart, your painting that lights up ----------
+(function(){
+  var R=document.documentElement, RM=matchMedia('(prefers-reduced-motion: reduce)').matches, E='cubic-bezier(.23,1,.32,1)', IO='cubic-bezier(.65,0,.35,1)';
+  var g=window.__globe, $=function(q){ return document.querySelector(q); }, $$=function(q){ return Array.prototype.slice.call(document.querySelectorAll(q)); };
+  var band=$('.band'), img=$('.band picture img'), scene=$('.scene'), lines=$$('.copy h1 > span'), sub=$('.copy p'), dl=$('.row .cta'), lv=$('.row .live'), nav=$('.nav'), h1=$('.copy h1');
+
+  // ---- the opening ----
+  if(R.classList.contains('intro')){
+    var V=R.dataset.intro, A=[], T=[], done=false;
+    function an(el,k,o){ if(!el) return; o.fill='both'; o.easing=o.easing||E; A.push(el.animate(k,o)); }
+    function at(ms,f){ T.push(setTimeout(f,ms)); }
+    var rise=[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}], fade=[{opacity:0},{opacity:1}], on=[{opacity:1},{opacity:1}];
+    function counter(ms){ at(ms,function(){ var c=window.__count; if(!c) return; [409,410,411,412].forEach(function(n,i){ at(i*70,function(){ c.roll(n,true); }); }); }); }
+    // the stone out of the dark: a layer of the page black, masked by the image itself (only the stone, never the openings, never a rectangle)
+    var shade=document.createElement('div'), src=img.currentSrc||img.src;
+    shade.style.cssText='position:absolute;inset:0;pointer-events:none;background:#060707;-webkit-mask:url('+src+') 0 0/100% 100% no-repeat;mask:url('+src+') 0 0/100% 100% no-repeat';
+    band.appendChild(shade);
+    function stone(delay,dur,from){ an(img,[{opacity:0},{opacity:1}],{delay:Math.max(0,delay-160),duration:160,easing:'linear'}); an(shade,[{opacity:from==null?1:from},{opacity:0}],{delay:delay,duration:dur}); }
+    // the rim lights from left to right through a soft edge (a mask, never a hard cut)
+    function dawn(delay,dur){ var b=g.base; ['maskImage','webkitMaskImage'].forEach(function(k){ b.style[k]='linear-gradient(90deg,#000 40%,transparent 60%)'; }); ['maskSize','webkitMaskSize'].forEach(function(k){ b.style[k]='250% 100%'; });
+      an(b,[{maskPosition:'100% 0',webkitMaskPosition:'100% 0'},{maskPosition:'0% 0',webkitMaskPosition:'0% 0'}],{delay:delay,duration:dur,easing:IO}); }
+    function tail(t0){ an(sub,rise,{delay:t0,duration:500}); an(dl,rise,{delay:t0+300,duration:400}); an(lv,rise,{delay:t0+450,duration:400}); counter(t0+500); an(nav,fade,{delay:t0+600,duration:500}); }
+    if(V==='a'){ // dawn: the rim lights from left to right, the arches come out of the dark against it, then the world, the first link, the words
+      an(band,on,{duration:1});
+      dawn(200,1300);
+      stone(600,1500);
+      an(g.live,fade,{delay:1000,duration:800});
+      at(1300,function(){ g.link(); }); at(2600,function(){ g.release(); });
+      lines.forEach(function(l,i){ an(l,rise,{delay:1400+i*120,duration:600}); });
+      tail(1700);
+    } else if(V==='b'){ // the way in: you step into the hall, the whole view settles from a little closer, the title rises out of its line
+      band.style.transformOrigin='50% 35%';
+      an(band,[{opacity:0,transform:'scale(1.06)'},{opacity:1,transform:'scale(1)'}],{duration:2200,easing:'cubic-bezier(.16,1,.3,1)'});
+      stone(0,2000,.75);
+      at(900,function(){ g.link(); }); at(2400,function(){ g.release(); });
+      lines.forEach(function(l,i){ an(l,[{opacity:1,transform:'translateY(40%)',clipPath:'inset(0 0 100% 0)'},{opacity:1,transform:'none',clipPath:'inset(-20% 0 -20% 0)'}],{delay:1100+i*150,duration:700}); });
+      tail(1500);
+    } else { // the title first: the sentence alone in the middle of the dark, word by word, then it goes down to its place and the hall opens behind it
+      var r=h1.getBoundingClientRect(), dy=Math.round(innerHeight/2-(r.top+r.height/2)), wi=0;
+      lines.forEach(function(l){ var ws=l.textContent.split(' '); l.textContent=''; ws.forEach(function(w,j){ var sp=document.createElement('span'); sp.className='w'; sp.style.display='inline-block'; sp.textContent=w; l.appendChild(sp); if(j<ws.length-1) l.appendChild(document.createTextNode(' ')); an(sp,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{delay:200+(wi++)*90,duration:500}); }); an(l,on,{duration:1}); });
+      an(h1,[{transform:'translateY('+dy+'px)'},{transform:'none'}],{delay:1600,duration:1000,easing:IO});
+      an(band,fade,{delay:1600,duration:1200});
+      stone(1800,1400);
+      dawn(1700,1200);
+      an(g.live,fade,{delay:2200,duration:800});
+      at(2400,function(){ g.link(); }); at(3300,function(){ g.release(); });
+      tail(2500);
+    }
+    R.classList.remove('intro');
+    function clean(){ A.forEach(function(a){ try{ a.cancel(); }catch(e){} }); band.style.transformOrigin=''; shade.parentNode&&shade.parentNode.removeChild(shade); ['maskImage','webkitMaskImage','maskSize','webkitMaskSize'].forEach(function(k){ g.base.style[k]=''; }); }
+    Promise.all(A.map(function(a){ return a.finished; })).then(function(){ if(!done){ done=true; clean(); off(); } }).catch(function(){});
+    // any gesture ends the opening at once
+    function skip(){ if(done) return; done=true; T.forEach(clearTimeout); A.forEach(function(a){ try{ a.finish(); }catch(e){} }); clean(); g.release(); if(window.__count) window.__count.roll(412,true); off(); }
+    function off(){ ['wheel','touchstart','keydown','pointerdown'].forEach(function(e){ removeEventListener(e,skip); }); }
+    ['wheel','touchstart','keydown','pointerdown'].forEach(function(e){ addEventListener(e,skip,{passive:true}); });
+    if(scrollY>40) skip();
+  }
+
+  // ---- the planet sets as you scroll: it moves a little slower than the arches ----
+  if(!RM){ var tk=false; addEventListener('scroll',function(){ if(tk) return; tk=true; requestAnimationFrame(function(){ tk=false; var y=Math.min(scrollY,innerHeight*1.2); scene.style.transform=y>0?'translateY('+(y*.12).toFixed(1)+'px)':''; }); },{passive:true}); }
+
+  // ---- the feed: each post arrives in view, its session fills from zero ----
+  function fmt(m){ var h=Math.floor(m/60); return h?h+'H '+(m%60)+'M':(m%60)+'M'; }
+  var posts=$$('.feedcol .post:not(.you)');
+  if('IntersectionObserver' in window&&!RM){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(!e.isIntersecting) return; var p=e.target; io.unobserve(p); p.classList.add('in');
+      var b=p.querySelector('.poster .big'); if(b&&b.dataset.m){ var M=+b.dataset.m, t0=performance.now()+120; (function tick(now){ var k=Math.max(0,Math.min(1,(now-t0)/1100)); k=1-Math.pow(1-k,3); b.textContent=fmt(Math.round(M*k)); if(k<1) requestAnimationFrame(tick); })(t0); } }); },{threshold:.08});
+    posts.forEach(function(p){ if(p.getBoundingClientRect().top<innerHeight) return; p.classList.add('rv'); var b=p.querySelector('.poster .big'); if(b){ var mm=/(?:(\d+)H)?\s*(\d+)M/.exec(b.textContent); if(mm){ b.dataset.m=(+(mm[1]||0))*60+(+mm[2]); b.textContent='0M'; } } io.observe(p); });
+  }
+
+  // ---- the heart: it fills like in the app ----
+  $$('.pacts').forEach(function(pa){ var a=pa.querySelector('.a'); if(!a) return; a.classList.add('heart'); a.setAttribute('role','button'); a.tabIndex=0;
+    var path=a.querySelector('path'), num=a.lastChild, n=parseInt(num.textContent,10)||0;
+    function set(){ var L=a.classList.contains('liked'); a.setAttribute('aria-pressed',L); if(L){ path.setAttribute('fill','currentColor'); path.setAttribute('stroke','none'); } else { path.setAttribute('fill','none'); path.setAttribute('stroke','currentColor'); path.setAttribute('stroke-width','1.5'); path.setAttribute('stroke-linejoin','round'); } }
+    function tog(){ var L=!a.classList.contains('liked'); a.classList.toggle('liked',L); n+=L?1:-1; num.textContent=n; set(); if(L&&!RM) a.querySelector('svg').animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:320,easing:E}); }
+    a.addEventListener('click',tog); a.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tog(); } }); set(); });
+
+  // ---- your painting lights up with every minute you stay ----
+  var rec=$('.you .rec'); if(rec) setInterval(function(){ var m=Math.floor((window.__onpage||0)/60); rec.style.setProperty('--veil',Math.max(.16,.42-.05*m).toFixed(2)); },5000);
+})();
+</script>
+</body>
+</html>
