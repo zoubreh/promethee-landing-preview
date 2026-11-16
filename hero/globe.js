@@ -120,6 +120,82 @@ function start(stage, opts){
     c.globalCompositeOperation='lighter'; [[1,0.08],[0.08,1]].forEach(function(sc){ c.save(); c.translate(24,24); c.scale(sc[0],sc[1]); var g2=c.createRadialGradient(0,0,0,0,0,24); g2.addColorStop(0,'rgba('+IV+',0.9)'); g2.addColorStop(1,'rgba('+IV+',0)'); c.fillStyle=g2; c.beginPath(); c.arc(0,0,24,0,6.2832); c.fill(); c.restore(); }); })();
   if(CONS){ for(var i3=0;i3<CN.length;i3++){ var best3=[[9,-1],[9,-1]]; for(var j3=0;j3<CN.length;j3++){ if(i3===j3) continue; var d3=Math.acos(Math.max(-1,Math.min(1,CN[i3].v[0]*CN[j3].v[0]+CN[i3].v[1]*CN[j3].v[1]+CN[i3].v[2]*CN[j3].v[2]))); if(d3<best3[0][0]){ best3[1]=best3[0]; best3[0]=[d3,j3]; } else if(d3<best3[1][0]) best3[1]=[d3,j3]; }
       for(var b3=0;b3<2;b3++){ var jj3=best3[b3][1]; if(jj3<0||best3[b3][0]>(opts.cityLink||9)*D2R) continue; var a3=Math.min(i3,jj3), c3=Math.max(i3,jj3); if(!CE.some(function(e){ return e[0]===a3&&e[1]===c3; })) CE.push([a3,c3]); } } }
+  // ---- the users (opts.clusters, v6, 16 Nov): the planet of before (the scattered lights of people, the coasts, the cities), dimmed, and on it
+  // a few hundred users, placed like the people (loose around the cities, never on a lattice). The lines no longer join cities: a line leaves a
+  // user who is in session and reaches another one nearby, who lights up in turn and passes it on. It spreads from place to place.
+  // Now and then the picture of the newcomer shows above their dot, small. Hovering any user shows their picture and handle. Always above the dot.
+  var CLU=!!opts.clusters, DOT=[], WAKE=0, PINS=[], LK=[], PENDL=[], nextSeed=0.6, hovDot=-1, FACE=null, NFACE=8, K=1;
+  var MAXL=opts.links||6, PIN_HOLD=opts.pinHold||2.4;
+  var NAMES=['ayo','lena','marco','sofia','noor','kenji','mara','theo','ines','hugo','julie','karim','nina','luca','emma','sami','alba','jonas','mila','yuki','omar','elsa','tom','lou'];
+  if(CLU){ var cs3=53; function r3(){ cs3=(cs3*1664525+1013904223)>>>0; return cs3/4294967296; } function g3(){ var u=r3()||1e-9, v=r3(); return Math.sqrt(-2*Math.log(u))*Math.cos(6.2831853*v); }
+    var NU=opts.users||260, tr3=0;
+    while(DOT.length<NU&&tr3<NU*40){ tr3++; var r0u=r3()*cwt, ku=0; while(cw[ku]<r0u) ku++; var CU=CITIES[ku], sgu=0.5+1.7*CU[2], ga=g3(), gb=g3();
+      var lau=CU[0]+ga*sgu, lou=CU[1]+gb*sgu/Math.max(0.3,Math.cos(lau*D2R)); if(lau>66||lau<-56) continue; lou=((lou+540)%360)-180; if(!onLand(lau,lou)) continue;
+      var lit=r3()<0.12;
+      DOT.push({v:geo(lau,lou),a:0.30+0.25*r3(),s:0.85+0.35*r3(),t0:lit?-30*r3():-1e9,life:lit?45+40*r3():0,tg:false,sx:0,sy:0,vis:0,
+        face:Math.floor(r3()*(NFACE+3)),name:NAMES[Math.floor(r3()*NAMES.length)]+(10+Math.floor(r3()*90))}); }
+    FACE=new Image(); FACE.src=opts.faces||'img/faces.jpg'; }
+  // the limb under a given x (it curves down toward the sides): a picture that shows on its own never crosses the lit rim
+  var LIMB={}; function limbY(x){ var k=Math.round(x/4); if(LIMB[k]==null){ var y=HY-12; while(y<700&&inSky(k*4,y)) y+=1; LIMB[k]=y; } return LIMB[k]; }
+  function EO(x){ x=Math.max(0,Math.min(1,x)); return 1-Math.pow(1-x,3); }
+  function level(d,t){ var ag=t-d.t0; if(ag<0||ag>=d.life+3) return 0; return ag<0.5?EO(ag/0.5):ag<d.life?1:1-(ag-d.life)/3; }
+  // pin sizes are in page pixels (K = scene units per page pixel), so the picture keeps its size whatever the size of the hero
+  function fits(d){ if(d.vis<0.3) return false; var h=(4+10+22+4)*K, w=15*K; if(d.sy-h<limbY(d.sx)+4) return false; for(var k=0;k<3;k++){ var q=OPEN[k]; if(d.sx>q.x0+w&&d.sx<q.x1-w&&d.sy<q.y1-6) break; } if(k===3) return false;
+    for(var n=0;n<PINS.length;n++){ var pd=PINS[n].d; if(Math.hypot(pd.sx-d.sx,pd.sy-d.sy)<44*K) return false; } return true; }
+  function pin(d,t,hov){ if(live.clientWidth<620) return null; var P={d:d,t0:t,out:-1,hov:!!hov}; PINS.push(P); return P; }
+  function drawPins(t){
+    for(var k=PINS.length-1;k>=0;k--){ var P=PINS[k], d=P.d;
+      if(P.out<0&&(d.vis<0.2||(P.hov?DOT[hovDot]!==d:t-P.t0>PIN_HOLD))) P.out=t;
+      var e=EO((t-P.t0)/0.18), tout=P.out>=0?(t-P.out)/0.14:0; if(tout>=1){ PINS.splice(k,1); continue; }
+      var op=e*(1-EO(tout)), x=d.sx, y=d.sy, r=10*K, stem=10*K, sc=0.97+0.03*e;
+      ctx.save(); ctx.globalAlpha=op; ctx.translate(x,y); ctx.scale(sc,sc);
+      ctx.strokeStyle='rgba('+IV+',0.45)'; ctx.lineWidth=K; ctx.beginPath(); ctx.moveTo(0,-3.5*K); ctx.lineTo(0,-3.5*K-stem); ctx.stroke();
+      var cy=-3.5*K-stem-r-K;
+      ctx.fillStyle='rgba('+IV+',0.55)'; ctx.beginPath(); ctx.arc(0,cy,r+K,0,6.2832); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.arc(0,cy,r,0,6.2832); ctx.clip();
+      if(d.face<NFACE&&FACE&&FACE.complete&&FACE.naturalWidth){ ctx.drawImage(FACE,d.face*96,0,96,96,-r,cy-r,2*r,2*r); }
+      else { ctx.fillStyle='#1C1D1D'; ctx.fillRect(-r,cy-r,2*r,2*r); ctx.fillStyle='#B4B4B0'; ctx.font='500 '+(9.5*K)+'px "DM Sans",system-ui,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(d.name.charAt(0).toUpperCase(),0,cy+0.5*K); }
+      ctx.restore();
+      // the handle: only for the person under the pointer, beside the picture (on the other side when the pillar is close)
+      if(P.hov){ ctx.font='500 '+(11*K)+'px "DM Sans",system-ui,sans-serif'; ctx.textBaseline='middle'; var tx='@'+d.name, tw=ctx.measureText(tx).width, right=true;
+        for(var q=0;q<3;q++){ var O=OPEN[q]; if(x>=O.x0&&x<=O.x1&&x+r+7*K+tw>O.x1-6*K) right=false; }
+        ctx.textAlign=right?'left':'right'; var hx=(right?1:-1)*(r+7*K); ctx.lineJoin='round'; ctx.strokeStyle='#060707'; ctx.lineWidth=4*K; ctx.strokeText(tx,hx,cy); ctx.fillStyle='#EDEAE4'; ctx.fillText(tx,hx,cy); }
+      ctx.restore(); } }
+  function spawnFrom(a,t){ var c=[]; for(var q=0;q<DOT.length;q++){ var b=DOT[q]; if(b===a||b.tg||b.vis<0.25) continue; var om=Math.acos(Math.max(-1,Math.min(1,a.v[0]*b.v[0]+a.v[1]*b.v[1]+a.v[2]*b.v[2]))); if(om<1.2*D2R||om>16*D2R) continue; c.push([om+(level(b,t)>0?1:0),b,om]); }
+    if(!c.length) return false; c.sort(function(m,n){ return m[0]-n[0]; }); var pk=c[Math.floor(rnd()*Math.min(8,c.length))], b2=pk[1], om2=pk[2];
+    b2.tg=true; var gr=0.9+om2*2.4; LK.push({a:a,b:b2,t0:t,grow:gr,hold:0.3,shrink:gr,lift:Math.max(0.003,om2*0.12),arr:false}); return true; }
+  function someone(t,lit){ var c=[]; for(var q=0;q<DOT.length;q++){ var d=DOT[q]; if(d.vis>0.3&&(level(d,t)>0.5)===lit) c.push(d); } return c.length?c[Math.floor(rnd()*c.length)]:null; }
+  function drawClusters(t){
+    K=live.clientWidth?W/live.clientWidth:1;
+    for(var b=0;b<NB;b++) pb[b]=new Path2D(); var bestD=11*K, hv=-1, nd=0, glow=[];
+    for(var i=0;i<DOT.length;i++){ var d=DOT[i]; d.vis=0; rot(d.v[0],d.v[1],d.v[2]); var fz=R3[2]*D-1; if(fz<=0.004||!proj(R3[0],R3[1],R3[2],o)) continue;
+      var f=Math.min(1,fz/((D-1)*0.55)); d.sx=o[0]; d.sy=o[1]; if(o[0]<X0||o[0]>X1||o[1]<Y0||o[1]>Y1) continue; d.vis=f;
+      var lv=level(d,t), a=d.a+(1-d.a)*lv, s=d.s+0.75*lv; if(lv>0.05) glow.push(d,lv*f);
+      if(inside&&!drag){ var dm=Math.hypot(o[0]-mx,o[1]-my)-(i===hovDot?5*K:0)-(lv>0.5?2*K:0); if(dm<bestD){ bestD=dm; hv=i; } }
+      var al=a*(0.2+0.8*f), bi=Math.min(NB-1,Math.floor(al*NB)), rr=s*(0.6+0.4*f); pb[bi].moveTo(o[0]+rr,o[1]); pb[bi].arc(o[0],o[1],rr,0,6.2832); nd++; }
+    for(var b2=0;b2<NB;b2++){ ctx.fillStyle='rgba('+IV+','+((b2+0.5)/NB).toFixed(3)+')'; ctx.fill(pb[b2]); }
+    ctx.globalCompositeOperation='lighter'; for(var g=0;g<glow.length;g+=2){ var gd=glow[g]; ctx.globalAlpha=0.5*glow[g+1]; ctx.drawImage(spr,gd.sx-7,gd.sy-7,14,14); } ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+    stat.people=nd;
+    // the user under the pointer: one pin, which moves from a person to the next without coming in again
+    if(hv!==hovDot){ hovDot=hv; if(hv>=0){ var hp=null; for(var h=0;h<PINS.length;h++) if(PINS[h].hov&&PINS[h].out<0) hp=PINS[h]; if(hp) hp.d=DOT[hv]; else pin(DOT[hv],t,true); } }
+    // one more person in session (the counter): a line leaves toward a new user
+    if(WAKE>0){ var src=someone(t,true)||someone(t,false); if(src){ if(level(src,t)<=0){ src.t0=t; src.life=40+40*rnd(); } spawnFrom(src,t); } WAKE--; }
+    // it keeps going on its own: when few lines are left, one leaves again from someone in session
+    if(!HOLD&&LK.length<2&&t>=nextSeed){ var s0=someone(t,true)||someone(t,false); if(s0){ if(level(s0,t)<=0){ s0.t0=t; s0.life=40+40*rnd(); } spawnFrom(s0,t); } nextSeed=t+0.7+rnd(); }
+    for(var pq=PENDL.length-1;pq>=0;pq--){ if(t>=PENDL[pq].t){ var pe=PENDL.splice(pq,1)[0]; if(LK.length<MAXL&&pe.d.vis>0.2) spawnFrom(pe.d,t); } }
+    ctx.lineWidth=opts.linkWidth||1; ctx.strokeStyle='rgba('+IV+','+(opts.linkAlpha||0.7)+')';
+    for(var l=LK.length-1;l>=0;l--){ var L=LK[l], age=t-L.t0;
+      if(!L.arr&&age>=L.grow){ L.arr=true; L.b.tg=false; L.b.t0=t; L.b.life=40+45*rnd();
+        if(!HOLD){ PENDL.push({d:L.b,t:t+0.25+0.4*rnd()}); if(rnd()<0.5) PENDL.push({d:L.b,t:t+0.7+0.8*rnd()}); }
+        var na=0; for(var n2=0;n2<PINS.length;n2++) if(!PINS[n2].hov) na++; if(na<3&&rnd()<0.55&&fits(L.b)) pin(L.b,t); }
+      if(age>=L.grow+L.hold+L.shrink){ L.b.tg=false; LK.splice(l,1); continue; }
+      var head=EIO(Math.min(1,age/L.grow)), tail=EIO(Math.max(0,Math.min(1,(age-L.grow-L.hold)/L.shrink))), on=false; ctx.beginPath();
+      for(var s2=0;s2<=40;s2++){ var u=tail+(head-tail)*s2/40; slerp(L.a.v,L.b.v,u,ap); var hh=1+L.lift*Math.sin(Math.PI*u); rot(ap[0]*hh,ap[1]*hh,ap[2]*hh); if(hidden(R3[0],R3[1],R3[2])||!proj(R3[0],R3[1],R3[2],o)){ on=false; continue; } if(!on){ ctx.moveTo(o[0],o[1]); on=true; } else ctx.lineTo(o[0],o[1]); }
+      ctx.stroke(); }
+    stat.links=LK.length;
+    drawPins(t);
+    live.style.cursor=drag?'grabbing':hovDot>=0?'pointer':inside?'grab':'default';
+  }
   var spr=document.createElement('canvas'); spr.width=spr.height=64; (function(){ var g=spr.getContext('2d'), gr=g.createRadialGradient(32,32,0,32,32,32); for(var q=0;q<=16;q++){ var u=q/16, a=Math.exp(-u*u*28)*0.95+Math.exp(-u*u*5)*0.16; gr.addColorStop(u,'rgba('+IV+','+(q===16?0:a).toFixed(4)+')'); } g.fillStyle=gr; g.fillRect(0,0,64,64); })();
   // ---- links: great circles between two cities, lifted, that draw themselves, hold, then fade ----
   var HOLD=!!opts.hold, WANT=0, EIO=function(x){ return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2; }, FLASH=[], PEND=[], LINKS=[], MAXL=opts.links||8, LIFT=opts.lift||[0.02,0.06], LIFE=opts.life||[10,22], PULSE=!!opts.pulses;
@@ -182,18 +258,19 @@ function start(stage, opts){
       nv2++; var bi=Math.min(NB-1,Math.floor(al*NB)); var rr=PS[i]*(0.55+0.45*f); pb[bi].moveTo(o[0]+rr,o[1]); pb[bi].arc(o[0],o[1],rr,0,6.2832); }
     for(var b2=0;b2<NB;b2++){ ctx.fillStyle='rgba('+IV+','+((b2+0.5)/NB).toFixed(3)+')'; ctx.fill(pb[b2]); }
     // cities: project, glow
-    HOV=-1; var best=18;
+    HOV=-1; var best=CLU?-1:18;
     for(var k=0;k<CN.length;k++){ var C=CN[k]; rot(C.v[0],C.v[1],C.v[2]); var fz2=R3[2]*D-1; C.vis=0; if(fz2<=0.01||!proj(R3[0],R3[1],R3[2],o)) continue;
       var night=1; if(MODE==='dawn'){ var ld2=R3[0]*SUN[0]+R3[1]*SUN[1]+R3[2]*SUN[2]; night=Math.max(0,Math.min(1,(-ld2+0.02)/0.18)); }
       C.vis=Math.min(1,fz2/((D-1)*0.5))*night; C.sx=o[0]; C.sy=o[1]; C.n=[R3[0],R3[1],R3[2]];
       if(inside&&!drag){ var dd=Math.hypot(o[0]-mx,o[1]-my); if(dd<best&&C.vis>0.1){ best=dd; HOV=k; } } }
-    if(CONS){ ctx.lineWidth=0.7; ctx.beginPath(); for(var e5=0;e5<CE.length;e5++){ var A5=CN[CE[e5][0]], B5=CN[CE[e5][1]]; if(A5.vis<=0.05||B5.vis<=0.05) continue; ctx.moveTo(A5.sx,A5.sy); ctx.lineTo(B5.sx,B5.sy); } ctx.strokeStyle='rgba('+IV+','+(opts.figAlpha||0.32)+')'; ctx.stroke();
-      ctx.globalCompositeOperation='lighter'; for(var k6=0;k6<CN.length;k6++){ var C6=CN[k6]; if(C6.vis<=0.02) continue; var sz6=(10+16*C6.w)*(0.5+0.5*C6.vis)*(k6===HOV?1.6:1); ctx.globalAlpha=Math.min(1,(0.55+0.45*C6.w)*C6.vis); ctx.drawImage(star,C6.sx-sz6/2,C6.sy-sz6/2,sz6,sz6); } ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }
+    if(CONS){ ctx.lineWidth=0.7; ctx.beginPath(); if(!CLU) for(var e5=0;e5<CE.length;e5++){ var A5=CN[CE[e5][0]], B5=CN[CE[e5][1]]; if(A5.vis<=0.05||B5.vis<=0.05) continue; ctx.moveTo(A5.sx,A5.sy); ctx.lineTo(B5.sx,B5.sy); } ctx.strokeStyle='rgba('+IV+','+(opts.figAlpha||0.32)+')'; ctx.stroke();
+      ctx.globalCompositeOperation='lighter'; for(var k6=0;k6<CN.length;k6++){ var C6=CN[k6]; if(C6.vis<=0.02) continue; var sz6=(10+16*C6.w)*(0.5+0.5*C6.vis)*(k6===HOV?1.6:1); ctx.globalAlpha=Math.min(1,(0.55+0.45*C6.w)*C6.vis)*(opts.cityAlpha||1); ctx.drawImage(star,C6.sx-sz6/2,C6.sy-sz6/2,sz6,sz6); } ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }
     ctx.globalCompositeOperation='lighter';
     var GL=opts.glow||1;
-    for(var k2=0;k2<CN.length;k2++){ var C2=CN[k2]; if(C2.vis<=0.02||C2.sx<X0||C2.sx>X1||C2.sy<Y0||C2.sy>Y1) continue; var br=0.85+0.15*Math.sin(t*0.6+k2*1.7); var sz=(8+20*C2.w)*GL*(0.45+0.55*C2.vis)*(k2===HOV?1.8:1); ctx.globalAlpha=Math.min(1,(0.40+0.45*C2.w)*C2.vis*br*(k2===HOV?1.4:1)); ctx.drawImage(spr,C2.sx-sz/2,C2.sy-sz/2,sz,sz); }
+    for(var k2=0;k2<CN.length;k2++){ var C2=CN[k2]; if(C2.vis<=0.02||C2.sx<X0||C2.sx>X1||C2.sy<Y0||C2.sy>Y1) continue; var br=0.85+0.15*Math.sin(t*0.6+k2*1.7); var sz=(8+20*C2.w)*GL*(0.45+0.55*C2.vis)*(k2===HOV?1.8:1); ctx.globalAlpha=Math.min(1,(0.40+0.45*C2.w)*C2.vis*br*(k2===HOV?1.4:1))*(opts.cityAlpha||1); ctx.drawImage(spr,C2.sx-sz/2,C2.sy-sz/2,sz,sz); }
     ctx.globalAlpha=1;
-    // links
+    // links (none with the clusters: no line between two places)
+    if(!CLU){
     if(opts.relay){ for(var pi=PEND.length-1;pi>=0;pi--){ if(t>=PEND[pi].t){ var pc=PEND.splice(pi,1)[0]; if(LINKS.length<MAXL+1&&CN[pc.c].vis>0.1) spawn(t,pc.c); } } }
     if(!HOLD&&LINKS.length<MAXL&&rnd()<dt*(opts.rate||1.2)) spawn(t);
     if(WANT>0){ for(var wq=0;wq<4&&WANT>0;wq++){ if(spawn(t)) WANT--; else break; } }
@@ -219,11 +296,13 @@ function start(stage, opts){
       if(!RELAY&&age<E.grow&&started){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.9; ctx.drawImage(spr,lastx-7,lasty-7,14,14); ctx.globalAlpha=1; }
       // pulses: a light that runs along a settled link
       if(PULSE&&!RELAY&&age>=E.grow&&fade>0.05){ var pu=((t*0.22+E.ph)%1); slerp(A0.v,B0.v,pu,ap); var h2=1+E.lift*Math.sin(Math.PI*pu); rot(ap[0]*h2,ap[1]*h2,ap[2]*h2); if(!hidden(R3[0],R3[1],R3[2])&&proj(R3[0],R3[1],R3[2],o2)){ ctx.globalAlpha=Math.min(1,0.9*fade*(HOV>=0&&!hl?0.4:1)); ctx.drawImage(spr,o2[0]-6,o2[1]-6,12,12); ctx.globalAlpha=1; } } }
+    }
     ctx.globalCompositeOperation='source-over';
+    if(CLU) drawClusters(t);
     // the hovered city: a fine ring
-    if(HOV>=0){ var H0=CN[HOV]; ctx.strokeStyle='rgba('+IV+',0.85)'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.arc(H0.sx,H0.sy,6.5,0,6.2832); ctx.stroke(); live.style.cursor=drag?'grabbing':'pointer'; } else if(!drag) live.style.cursor=inside?'grab':'default';
+    if(CLU){} else if(HOV>=0){ var H0=CN[HOV]; ctx.strokeStyle='rgba('+IV+',0.85)'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.arc(H0.sx,H0.sy,6.5,0,6.2832); ctx.stroke(); live.style.cursor=drag?'grabbing':'pointer'; } else if(!drag) live.style.cursor=inside?'grab':'default';
     ctx.restore();
-    stat.people=nv2; stat.links=nl;
+    if(!CLU){ stat.people=nv2; stat.links=nl; }
   }
   var baseScaleDawn=Math.min(BS,0.8), lastBase=-1;
   function glBase(){
@@ -249,13 +328,13 @@ function start(stage, opts){
   }
   setRot(); if(MODE!=='dawn'&&glBase()){} else if(MODE==='dawn'){ base.width=Math.round(W*baseScaleDawn); base.height=Math.round(H*baseScaleDawn); renderBase(baseScaleDawn); } else renderBase(BS);
   // prefill: a few links already there on the first frame
-  if(!HOLD) for(var pf=0;pf<(opts.prefill||0);pf++){ setRot(); frameSilent(); }
+  if(!HOLD&&!CLU) for(var pf=0;pf<(opts.prefill||0);pf++){ setRot(); frameSilent(); }
   function frameSilent(){ for(var k=0;k<CN.length;k++){ var C=CN[k]; rot(C.v[0],C.v[1],C.v[2]); var fz2=R3[2]*D-1; C.vis=fz2>0.01?Math.min(1,fz2/((D-1)*0.5)):0; } spawn(-rnd()*6); }
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var clock=0, last=0, raf=0, running=true, visible=true;
   function loop(now){ if(!running) return; var dt=last?Math.min(0.1,(now-last)/1000):0; last=now; if(visible){ clock+=dt; frame(clock,dt); } raf=requestAnimationFrame(loop); }
   if(reduce){ SPIN=0; frame(0,0); } else { if('IntersectionObserver' in window){ new IntersectionObserver(function(es){ visible=es[0].isIntersecting; last=0; }).observe(live); } raf=requestAnimationFrame(loop); }
-  return { base:base, live:live, release:function(){ HOLD=false; }, link:function(){ WANT++; }, stop:function(){ running=false; cancelAnimationFrame(raf); [base,live].forEach(function(c){ c.remove(); }); }, stats:function(){ return stat; }, cities:function(){ return CN.filter(function(c){ return c.vis>0.3&&c.sx>OPEN[0].x0+20&&c.sx<OPEN[2].x1-20&&c.sy>360&&c.sy<560; }).map(function(c){ return [c.sx,c.sy,c.w]; }); }, hover:function(){ return HOV; }, render:function(t){ running=false; cancelAnimationFrame(raf); frame(t,0); } };
+  return { base:base, live:live, release:function(){ HOLD=false; }, link:function(){ if(CLU) WAKE++; else WANT++; }, pins:function(){ return PINS.length; }, hover2:function(){ return hovDot>=0; }, stop:function(){ running=false; cancelAnimationFrame(raf); [base,live].forEach(function(c){ c.remove(); }); }, stats:function(){ return stat; }, cities:function(){ return CN.filter(function(c){ return c.vis>0.3&&c.sx>OPEN[0].x0+20&&c.sx<OPEN[2].x1-20&&c.sy>360&&c.sy<560; }).map(function(c){ return [c.sx,c.sy,c.w]; }); }, hover:function(){ return HOV; }, render:function(t){ running=false; cancelAnimationFrame(raf); frame(t,0); } };
 }
 window.PromGlobe={start:start};
 })();

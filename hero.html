@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
 <title>Promethee</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -457,8 +457,8 @@ html.solo .send.sent .note{display:block}
   var io=new IntersectionObserver(function(es){ if(es[0].isIntersecting){ io.disconnect(); show(); } },{threshold:.25}); io.observe(G); })();
 </script>
 <script>(function(){ var e=document.querySelector('.you'); if(!('IntersectionObserver' in window)){ e.classList.add('in'); return; } var io=new IntersectionObserver(function(es){ if(es[0].isIntersecting){ e.classList.add('in'); io.disconnect(); } },{threshold:.15}); io.observe(e); })();</script>
-<script src="hero/coast.js"></script>
-<script src="hero/globe.js"></script>
+<script src="hero/coast.js?v=7"></script>
+<script src="hero/globe.js?v=7"></script>
 <script>
 // the planet (variant B, Réseau, chosen 9 Nov): hero/globe.js in the scene (1440 x 900, as wide as the f10, top on top), seen through the openings of the f10
 (function(){
@@ -466,7 +466,7 @@ html.solo .send.sent .note{display:block}
   var OPEN=[{x0:263,x1:519,y0:335,y1:646},{x0:578,x1:864,y0:335,y1:646},{x0:923,x1:1178,y0:335,y1:646}];
   function ratio(){ var w=scene.getBoundingClientRect().width; return Math.max(1,Math.min(innerWidth<700?2:3.2, w/1440*(window.devicePixelRatio||1))); }
   var Q=new URLSearchParams(location.search), g=null, cur=0;
-  function boot(){ if(g) g.stop(); cur=ratio(); g=window.PromGlobe.start(scene,{mode:'web', constellation:true, cstep:2, cityMin:0.25, cityLink:8, lineAlpha:0.26, figAlpha:0.30, starAlpha:0.85, horizon:395, lat0:30, lon0:4, maxArc:24, people:0, terrain:0, coastAlpha:0, glow:0.35, links:4, lift:[0.006,0.02], linkAlpha:0.7, linkWidth:1, rate:0.5, pulses:true, relay:true, prefill:3, life:[14,30], spin:0.0025, dpr:cur, openings:OPEN, hold:!g&&document.documentElement.classList.contains('intro')}); window.__globe=g; if(Q.get('t')) g.render(parseFloat(Q.get('t'))); }
+  function boot(){ if(g) g.stop(); cur=ratio(); g=window.PromGlobe.start(scene,{mode:'web', clusters:true, users:260, peopleAlpha:0.5, cityAlpha:0.5, faces:'img/faces.jpg?v=7', constellation:true, cstep:2, cityMin:0.25, cityLink:8, lineAlpha:0.26, figAlpha:0.30, starAlpha:0.85, horizon:395, lat0:30, lon0:4, maxArc:24, people:0, terrain:0, coastAlpha:0, glow:0.35, links:6, lift:[0.006,0.02], linkAlpha:0.7, linkWidth:1, rate:0.5, pulses:true, relay:true, prefill:3, life:[14,30], spin:0.0025, dpr:cur, openings:OPEN, hold:!g&&document.documentElement.classList.contains('intro')}); window.__globe=g; if(Q.get('t')) g.render(parseFloat(Q.get('t'))); }
   boot();
   var rt=0; addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){ var r=ratio(); if(r>cur*1.2||r<cur/1.6) boot(); },300); });
   // the counter: it moves by one now and then, up or down, around 412
@@ -479,7 +479,7 @@ html.solo .send.sent .note{display:block}
   function show(val,up){ roll(document.getElementById('live'),val,up); roll(document.getElementById('live2'),val,up); }
   ['live','live2'].forEach(function(id){ var b=document.getElementById(id); if(b){ var t=b.textContent; b.textContent=''; var n=document.createElement('span'); n.textContent=t; b.appendChild(n); } });
   window.__count={ set:function(val){ v=val; show(val,true); }, roll:show };
-  // one more person in session: the figure rolls up and a link leaves on the planet
+  // one more person in session: the figure rolls up, a dot lights up on the planet and the next link goes to that person
   function step(){ var pu=Math.max(.15,Math.min(.85,.5-.08*(v-C))), up=Math.random()<pu; v+=up?1:-1; v=Math.max(C-6,Math.min(C+6,v)); show(v,up); if(up&&g&&g.link) g.link(); setTimeout(step,4000+7000*Math.random()); }
   setTimeout(step,6000+5000*Math.random());
 })();
